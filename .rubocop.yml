@@ -11,7 +11,7 @@ AllCops:
     - 'app/javascript/**/*'
     - 'node_modules/**/*'
     - 'vendor/**/*'
-    - 'lib/tasks/derivativo/**/*'
+    - 'lib/tasks/triclops/**/*'
     - 'tmp/**/*'
 
 Style/BracesAroundHashParameters:

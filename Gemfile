@@ -9,6 +9,8 @@ gem 'jbuilder', '~> 2.7'
 gem 'puma', '~> 3.11'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6.0.0'
+# Rainbow for text coloring
+gem 'rainbow', '~> 3.0'
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 5'
 # Use sqlite3 as the database for Active Record
