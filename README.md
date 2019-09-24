@@ -1,24 +1,30 @@
-# README
+# Triclops: A triple-eye-f (IIIF) Server
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Triclops is a cool IIIF server.
 
-Things you may want to cover:
+## Requirements
 
-* Ruby version
+- Ruby 2.6
+- Redis 3
+- More to come
 
-* System dependencies
+## First-Time Setup (for developers)
 
-* Configuration
+```
+git clone git@github.com:cul/ren-triclops.git # Clone the repo
+cd ren-triclops # Switch to the application directory
+# Note: Make sure rvm has selected the correct ruby version. You may need to move out of the directory and back into it force rvm to use the ruby version specified in .ruby_version.
+bundle install # Install gem dependencies
+yarn install # this assumes you have node and yarn installed (tested with Node 8 and Node 10)
+bundle exec rake triclops:setup:config_files # Set up config files like redis.yml and resque.yml
+bundle exec rake db:migrate # Run database migrations
+rails s -p 3000 # Start the application using rails server
+```
 
-* Database creation
+## Testing
+Our testing suite runs Rubocop and then runs all of our ruby tests. Travis CI will automatically run the test suite for every commit and pull request.
 
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+To run the continuous integration test suite locally on your machine run:
+```
+bundle exec rake triclops:ci
+```
