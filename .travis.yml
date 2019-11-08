@@ -16,6 +16,9 @@ env:
     - NODE_VERSION=10
     - NODE_VERSION=12
 
+services:
+  - redis-server
+
 addons:
   apt:
     packages:
