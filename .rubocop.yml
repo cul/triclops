@@ -2,7 +2,7 @@ inherit_gem:
   bixby: bixby_default.yml
 
 AllCops:
-  TargetRubyVersion: 2.6.4
+  TargetRubyVersion: 2.5.3
   TargetRailsVersion: 6.0.0
   DisplayCopNames: true
   Exclude:
@@ -14,11 +14,36 @@ AllCops:
     - 'lib/tasks/triclops/**/*'
     - 'tmp/**/*'
 
+Layout/IndentHash:
+  EnforcedStyle: consistent
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+
+Metrics/ParameterLists:
+  Exclude:
+    - 'app/models/concerns/triclops/resource/info.rb'
+
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/MessageSpies:
+  Enabled: false
+
+Style/BlockDelimiters:
+  Exclude:
+    - 'spec/**/*'
+
 Style/BracesAroundHashParameters:
   Enabled: false
 
 Style/FrozenStringLiteralComment:
   Enabled: false
+
+Style/IfUnlessModifier:
+  Exclude:
+    - 'config/initializers/triclops.rb'
 
 Style/RedundantSelf:
   Enabled: false
