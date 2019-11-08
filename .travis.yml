@@ -7,7 +7,7 @@ cache:
   yarn: true
 
 rvm:
-  - 2.5.3
+  - 2.6.4
 
 env:
   global:
@@ -33,3 +33,5 @@ before_script:
   - npm install -g yarn
   - npm --version
   - yarn install
+
+script: bundle exec rake triclops:ci

@@ -4,9 +4,9 @@ Triclops is a cool IIIF server.
 
 ## Requirements
 
-- Ruby 2.5 (note: ruby-opencv gem won't compile with Ruby 2.6)
+- Ruby 2.6
 - Redis 3
-- More to come
+- libvips (for Imogen image conversion gem dependency)
 
 ## First-Time Setup (for developers)
 
