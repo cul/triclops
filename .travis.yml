@@ -1,10 +1,12 @@
-dist: xenial
+dist: bionic
 language: ruby
 sudo: false
 cache:
   bundler: true
   npm: true
   yarn: true
+  directories:
+   - /tmp/vips-install
 
 rvm:
   - 2.6.4
@@ -20,10 +22,13 @@ services:
   - redis-server
 
 before_install:
-  - sudo apt-get -y install libvips libvips-dev libvips-tools
   - "echo 'gem: --no-document' > ~/.gemrc"
   - gem update --system
   - gem install bundler
+  - cd /tmp
+  - wget https://raw.githubusercontent.com/cul/imogen/519af4aea5323990d2d0300889fa4b8830737a69/travis/install-vips-bionic.sh
+  - chmod u+x ./install-vips-bionic.sh
+  - ./install-vips-bionic.sh
 
 before_script:
   - vips --version
