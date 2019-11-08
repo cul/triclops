@@ -43,7 +43,7 @@ RSpec.describe Triclops::ResourceAccessCache do
       instance.add('abc')
       expect(instance.all).to eq(['abc'])
       instance.add('xyz')
-      expect(instance.all).to eq(['abc', 'xyz'])
+      expect(instance.all.sort).to eq(['abc', 'xyz'])
     end
   end
 
