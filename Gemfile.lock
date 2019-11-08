@@ -1,11 +1,4 @@
 GIT
-  remote: https://github.com/barmintor/free-image-ruby.git
-  revision: 6761773da5614161c0c22bd0b0e250a5f6897bfc
-  specs:
-    free-image (0.6.2)
-      ffi (>= 1.0.10)
-
-GIT
   remote: https://github.com/cul/imogen.git
   revision: c2c4ba04b029162c566fd492de84e995c9fcb4bc
   branch: libvips
@@ -281,7 +274,6 @@ DEPENDENCIES
   byebug
   dry-schema (~> 1.4)
   factory_bot_rails (~> 5.1)
-  free-image!
   imogen!
   jbuilder (~> 2.7)
   listen (>= 3.0.5, < 3.2)

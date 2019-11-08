@@ -5,8 +5,6 @@ ruby '2.5.3'
 
 # Parameter validation
 gem 'dry-schema', '~> 1.4'
-# Imogen requires the free-image gem
-gem 'free-image', git: 'https://github.com/barmintor/free-image-ruby.git'
 # Use imogen for generating images
 # gem 'imogen', '0.1.9'
 # gem 'imogen', path: '../imogen'
