@@ -1,4 +1,4 @@
-dist: bionic
+dist: xenial
 language: ruby
 sudo: false
 cache:
@@ -19,17 +19,14 @@ env:
 services:
   - redis-server
 
-addons:
-  apt:
-    packages:
-      - libvips
-
 before_install:
+  - sudo apt-get -y install libvips libvips-dev libvips-tools
   - "echo 'gem: --no-document' > ~/.gemrc"
   - gem update --system
   - gem install bundler
 
 before_script:
+  - vips --version
   - bundle exec rake triclops:setup:config_files
   - nvm install $NODE_VERSION
   - nvm use $NODE_VERSION
