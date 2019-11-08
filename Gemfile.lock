@@ -1,3 +1,18 @@
+GIT
+  remote: https://github.com/barmintor/free-image-ruby.git
+  revision: 6761773da5614161c0c22bd0b0e250a5f6897bfc
+  specs:
+    free-image (0.6.2)
+      ffi (>= 1.0.10)
+
+GIT
+  remote: https://github.com/cul/imogen.git
+  revision: c2c4ba04b029162c566fd492de84e995c9fcb4bc
+  branch: libvips
+  specs:
+    imogen (0.2.0)
+      ruby-vips
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -68,7 +83,43 @@ GEM
     concurrent-ruby (1.1.5)
     crass (1.0.4)
     diff-lcs (1.3)
+    docile (1.3.2)
+    dry-configurable (0.8.3)
+      concurrent-ruby (~> 1.0)
+      dry-core (~> 0.4, >= 0.4.7)
+    dry-container (0.7.2)
+      concurrent-ruby (~> 1.0)
+      dry-configurable (~> 0.1, >= 0.1.3)
+    dry-core (0.4.9)
+      concurrent-ruby (~> 1.0)
+    dry-equalizer (0.2.2)
+    dry-inflector (0.2.0)
+    dry-initializer (3.0.1)
+    dry-logic (1.0.3)
+      concurrent-ruby (~> 1.0)
+      dry-core (~> 0.2)
+      dry-equalizer (~> 0.2)
+    dry-schema (1.4.1)
+      concurrent-ruby (~> 1.0)
+      dry-configurable (~> 0.8, >= 0.8.3)
+      dry-core (~> 0.4)
+      dry-equalizer (~> 0.2)
+      dry-initializer (~> 3.0)
+      dry-logic (~> 1.0)
+      dry-types (~> 1.2)
+    dry-types (1.2.0)
+      concurrent-ruby (~> 1.0)
+      dry-container (~> 0.3)
+      dry-core (~> 0.4, >= 0.4.4)
+      dry-equalizer (~> 0.2, >= 0.2.2)
+      dry-inflector (~> 0.1, >= 0.1.2)
+      dry-logic (~> 1.0, >= 1.0.2)
     erubi (1.8.0)
+    factory_bot (5.1.1)
+      activesupport (>= 4.2.0)
+    factory_bot_rails (5.1.1)
+      factory_bot (~> 5.1.0)
+      railties (>= 4.2.0)
     ffi (1.11.1)
     globalid (0.4.2)
       activesupport (>= 4.2.0)
@@ -77,6 +128,7 @@ GEM
     jaro_winkler (1.5.3)
     jbuilder (2.9.1)
       activesupport (>= 4.2.0)
+    json (2.2.0)
     listen (3.1.5)
       rb-fsevent (~> 0.9, >= 0.9.4)
       rb-inotify (~> 0.9, >= 0.9.7)
@@ -138,23 +190,26 @@ GEM
     rb-fsevent (0.10.3)
     rb-inotify (0.10.0)
       ffi (~> 1.0)
-    rspec-core (3.8.2)
-      rspec-support (~> 3.8.0)
-    rspec-expectations (3.8.4)
+    redis (4.1.3)
+    redlock (1.0.1)
+      redis (>= 3.0.0, < 5.0)
+    rspec-core (3.9.0)
+      rspec-support (~> 3.9.0)
+    rspec-expectations (3.9.0)
       diff-lcs (>= 1.2.0, < 2.0)
-      rspec-support (~> 3.8.0)
-    rspec-mocks (3.8.1)
+      rspec-support (~> 3.9.0)
+    rspec-mocks (3.9.0)
       diff-lcs (>= 1.2.0, < 2.0)
-      rspec-support (~> 3.8.0)
-    rspec-rails (3.8.2)
+      rspec-support (~> 3.9.0)
+    rspec-rails (3.9.0)
       actionpack (>= 3.0)
       activesupport (>= 3.0)
       railties (>= 3.0)
-      rspec-core (~> 3.8.0)
-      rspec-expectations (~> 3.8.0)
-      rspec-mocks (~> 3.8.0)
-      rspec-support (~> 3.8.0)
-    rspec-support (3.8.2)
+      rspec-core (~> 3.9.0)
+      rspec-expectations (~> 3.9.0)
+      rspec-mocks (~> 3.9.0)
+      rspec-support (~> 3.9.0)
+    rspec-support (3.9.0)
     rubocop (0.63.1)
       jaro_winkler (~> 1.5.1)
       parallel (~> 1.10)
@@ -166,6 +221,8 @@ GEM
     rubocop-rspec (1.31.0)
       rubocop (>= 0.60.0)
     ruby-progressbar (1.10.1)
+    ruby-vips (2.0.16)
+      ffi (~> 1.9)
     ruby_dep (1.5.0)
     sass (3.7.4)
       sass-listen (~> 4.0.0)
@@ -178,6 +235,11 @@ GEM
       sprockets (>= 2.8, < 4.0)
       sprockets-rails (>= 2.0, < 4.0)
       tilt (>= 1.1, < 3)
+    simplecov (0.17.1)
+      docile (~> 1.1)
+      json (>= 1.8, < 3)
+      simplecov-html (~> 0.10.0)
+    simplecov-html (0.10.2)
     spring (2.1.0)
     spring-watcher-listen (2.0.1)
       listen (>= 2.7, < 4.0)
@@ -217,13 +279,20 @@ DEPENDENCIES
   bixby (= 2.0.0.pre.beta1)
   bootsnap (>= 1.4.2)
   byebug
+  dry-schema (~> 1.4)
+  factory_bot_rails (~> 5.1)
+  free-image!
+  imogen!
   jbuilder (~> 2.7)
   listen (>= 3.0.5, < 3.2)
   puma (~> 3.11)
   rails (~> 6.0.0)
   rainbow (~> 3.0)
-  rspec-rails (~> 3.8)
+  redis (~> 4.1)
+  redlock (~> 1.0)
+  rspec-rails (~> 3.9)
   sass-rails (~> 5)
+  simplecov (~> 0.17)
   spring
   spring-watcher-listen (~> 2.0.0)
   sqlite3 (~> 1.4)
@@ -232,7 +301,7 @@ DEPENDENCIES
   webpacker (~> 4.0)
 
 RUBY VERSION
-   ruby 2.6.4p104
+   ruby 2.5.3p105
 
 BUNDLED WITH
    2.0.2
