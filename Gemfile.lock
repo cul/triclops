@@ -1,11 +1,3 @@
-GIT
-  remote: https://github.com/cul/imogen.git
-  revision: c2c4ba04b029162c566fd492de84e995c9fcb4bc
-  branch: libvips
-  specs:
-    imogen (0.2.0)
-      ruby-vips
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -118,6 +110,8 @@ GEM
       activesupport (>= 4.2.0)
     i18n (1.6.0)
       concurrent-ruby (~> 1.0)
+    imogen (0.2.0)
+      ruby-vips
     jaro_winkler (1.5.3)
     jbuilder (2.9.1)
       activesupport (>= 4.2.0)
@@ -274,7 +268,7 @@ DEPENDENCIES
   byebug
   dry-schema (~> 1.4)
   factory_bot_rails (~> 5.1)
-  imogen!
+  imogen (= 0.2.0)
   jbuilder (~> 2.7)
   listen (>= 3.0.5, < 3.2)
   puma (~> 3.11)

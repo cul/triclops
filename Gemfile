@@ -6,9 +6,9 @@ ruby '2.6.4'
 # Parameter validation
 gem 'dry-schema', '~> 1.4'
 # Use imogen for generating images
-# gem 'imogen', '0.1.9'
+gem 'imogen', '0.2.0'
 # gem 'imogen', path: '../imogen'
-gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'libvips'
+# gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'libvips'
 
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.7'
