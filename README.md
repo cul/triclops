@@ -15,8 +15,9 @@ git clone git@github.com:cul/ren-triclops.git # Clone the repo
 cd ren-triclops # Switch to the application directory
 # Note: Make sure rvm has selected the correct ruby version. You may need to move out of the directory and back into it force rvm to use the ruby version specified in .ruby_version.
 bundle install # Install gem dependencies
-yarn install # this assumes you have node and yarn installed (tested with Node 8 and Node 10)
+yarn install # this assumes you have node and yarn installed (tested with Node 10)
 bundle exec rake triclops:setup:config_files # Set up config files like redis.yml and resque.yml
+bundle exec rake triclops:setup:sample_resources # Set up sample Resource objects ('sample' and 'sample-with-transparency')
 bundle exec rake db:migrate # Run database migrations
 rails s -p 3000 # Start the application using rails server
 ```
