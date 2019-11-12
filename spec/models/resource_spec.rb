@@ -134,7 +134,22 @@ RSpec.describe Resource, type: :model do
 
       it "raises an error for a file that doesn't exist" do
         allow(instance).to receive(:location_uri).and_return('railsroot://nofile.png')
-        expect { instance.with_source_image_file }.to raise_error(Errno::ENOENT)
+        expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
+      end
+    end
+
+    context "with a placeholder:// path" do
+      it "returns the path to an existing file" do
+        allow(instance).to receive(:location_uri).and_return('placeholder://sound')
+
+        instance.with_source_image_file do |file|
+          expect(Rails.root.join('app', 'assets', 'images', 'placeholders', 'sound.png').to_s).to eq(file.path)
+        end
+      end
+
+      it "raises an error for a file that doesn't exist" do
+        allow(instance).to receive(:location_uri).and_return('placeholder://nofile')
+        expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
       end
     end
 
@@ -153,13 +168,13 @@ RSpec.describe Resource, type: :model do
 
       it "raises an error for a file that doesn't exist" do
         allow(instance).to receive(:location_uri).and_return('file:///no/file/here.png')
-        expect { instance.with_source_image_file }.to raise_error(Errno::ENOENT)
+        expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
       end
     end
 
     it "raises an error for an unsupported protocol" do
       allow(instance).to receive(:location_uri).and_return('abc://what/does/this/protocol/even/mean.png')
-      expect { instance.with_source_image_file }.to raise_error(Errno::ENOENT)
+      expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
     end
   end
 
@@ -186,6 +201,25 @@ RSpec.describe Resource, type: :model do
     end
   end
 
+  context '#cache_path' do
+    it 'works as expected' do
+      expect(instance.cache_path(raster_opts.merge(identifier: instance.identifier))).to eq('/Users/eric/Columbia/Columbia-Projects/repositories/triclops/tmp/triclops_test_cache/raster/9f/86/d0/81/9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08/full/full/0/color.png')
+      instance.location_uri = 'placeholder://cool'
+      expect(instance.cache_path(raster_opts.merge(identifier: instance.identifier))).to eq('/Users/eric/Columbia/Columbia-Projects/repositories/triclops/tmp/triclops_test_cache/raster/63/0f/dc/84/630fdc84e37d2c114ca6afdccb24fdc534bdd5f363745fe26833607fb067a080/full/full/0/color.png')
+    end
+  end
+
+  context '#location_uri_is_placeholder?' do
+    it 'returns false when location uri does not start with placeholder://' do
+      expect(instance.location_uri_is_placeholder?).to eq(false)
+    end
+
+    it 'returns true when location uri starts with placeholder://' do
+      instance.location_uri = 'placeholder://cool'
+      expect(instance.location_uri_is_placeholder?).to eq(true)
+    end
+  end
+
   context 'validation' do
     it 'does not allow empty values for certain fields' do
       instance.identifier = nil
@@ -201,6 +235,62 @@ RSpec.describe Resource, type: :model do
       instance.width = nil
       instance.height = nil
       expect(instance.valid?).to be true
+    end
+  end
+
+  context 'two resources with the same location_uri value' do
+    let(:resource1) do
+      Resource.new({
+        identifier: 'id1',
+        location_uri: location_uri,
+        width: width,
+        height: height,
+        featured_region: featured_region
+      })
+    end
+    let(:resource2) do
+      Resource.new({
+        identifier: 'id2',
+        location_uri: location_uri,
+        width: width,
+        height: height,
+        featured_region: featured_region
+      })
+    end
+    let(:raster_opts_base) do
+      {
+        region: 'full',
+        size: 'full',
+        rotation: 0,
+        quality: 'color',
+        format: 'png'
+      }
+    end
+    let(:raster_opts1) do
+      raster_opts_base.merge(identifier: resource1.identifier)
+    end
+    let(:raster_opts2) do
+      raster_opts_base.merge(identifier: resource2.identifier)
+    end
+    context 'should use different cache paths when both resources have the same NON-"placeholder://"-prefixed location_uri value' do
+      it do
+        resource1_raster_path = nil
+        resource2_raster_path = nil
+        resource1.raster(raster_opts1, true) { |raster_file| resource1_raster_path = raster_file.path }
+        resource2.raster(raster_opts2, true) { |raster_file| resource2_raster_path = raster_file.path }
+        expect(resource1_raster_path).not_to eq(resource2_raster_path)
+      end
+    end
+
+    context 'should use the same cache path when both resources have the same "placeholder://"-prefixed location_uri value' do
+      let(:location_uri) { 'placeholder://sound' }
+      it do
+        resource1_raster_path = nil
+        resource2_raster_path = nil
+        resource1.raster(raster_opts1, true) { |raster_file| resource1_raster_path = raster_file.path }
+        resource2.raster(raster_opts2, true) { |raster_file| resource2_raster_path = raster_file.path }
+        expect(resource1_raster_path).to eq(resource2_raster_path)
+      end
     end
   end
 end

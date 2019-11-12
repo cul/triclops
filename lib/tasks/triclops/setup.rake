@@ -36,8 +36,8 @@ namespace :triclops do
           featured_region: '320,320,1280,1280'
         },
         {
-          identifier: 'audio-resource',
-          location_uri: 'placeholder://audio'
+          identifier: 'sound-resource',
+          location_uri: 'placeholder://sound'
         }
       ].each do |resource_params|
         identifier = resource_params[:identifier]

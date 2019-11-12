@@ -2,7 +2,7 @@ class Resource < ApplicationRecord
   include Triclops::Resource::Info
 
   validates :identifier, :location_uri, presence: true
-  validates :width, :height, presence: true, unless: -> { self.location_uri.start_with?('placeholder://') }
+  validates :width, :height, presence: true, unless: -> { location_uri_is_placeholder? }
 
   # Yields a block with a File reference to the specified raster.
   # @param raster_opts [Hash]
@@ -64,9 +64,14 @@ class Resource < ApplicationRecord
     processed_raster_opts
   end
 
+  def cache_path(raster_opts)
+    return Triclops::RasterCache.instance.cache_path(raster_opts.merge(identifier: self.location_uri)) if location_uri_is_placeholder?
+    Triclops::RasterCache.instance.cache_path(raster_opts)
+  end
+
   def yield_cached_raster(raster_opts)
     # Get cache path
-    raster_file_path = Triclops::RasterCache.instance.cache_path(raster_opts)
+    raster_file_path = cache_path(raster_opts)
 
     unless File.exist?(raster_file_path)
       # We use a blocking lock so that two processes don't try to to run the
@@ -112,11 +117,20 @@ class Resource < ApplicationRecord
     case protocol
     when 'railsroot'
       yield File.new(Rails.root.join(path).to_s)
+    when 'placeholder'
+      yield File.new(Rails.root.join('app', 'assets', 'images', 'placeholders', path + '.png').to_s)
     when 'file'
       yield File.new(path)
     else
       raise Errno::ENOENT, "File not found at <#{self.location_uri}>"
     end
+  end
+
+  # Returns true if this Resource's location_uri points to a placeholder image value.
+  # @return [Boolean] true if location_uri starts with 'placeholder://'
+  def location_uri_is_placeholder?
+    return false if self.location_uri.nil?
+    self.location_uri.start_with?('placeholder://')
   end
 
   def self.generate_raster_tempfile_path(extension = '.blob')
