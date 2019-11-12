@@ -57,7 +57,7 @@ class Iiif::ImagesController < ApplicationController
     Triclops::ResourceAccessCache.instance.add(@resource.identifier) if TRICLOPS[:raster_cache][:enabled]
 
     @resource.raster(raster_opts, TRICLOPS[:raster_cache][:enabled]) do |raster_file|
-      send_raster_file(raster_file, raster_opts)
+      send_raster_file(raster_file, raster_opts, @resource.updated_at)
     end
   end
 
@@ -84,12 +84,11 @@ class Iiif::ImagesController < ApplicationController
       }
     end
 
-    def send_raster_file(raster_file, raster_opts)
+    def send_raster_file(raster_file, raster_opts, modification_time)
       expires_in 365.days, public: true
       response['Content-Length'] = File.size(raster_file.path).to_s
-      raster_modification_time = File.mtime(raster_file.path)
-      response['Last-Modified'] = raster_modification_time.httpdate
-      response['ETag'] = format('"%x"', raster_modification_time)
+      response['Last-Modified'] = modification_time.httpdate
+      response['ETag'] = format('"%x"', modification_time)
       # We can't use send_file on a temporary file that's deleted when we're
       # done with it, since send_file passes along file serving to the
       # webserver, so when the cache is turned off we'll use send_data.
