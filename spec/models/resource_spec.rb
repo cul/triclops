@@ -185,4 +185,14 @@ RSpec.describe Resource, type: :model do
       )
     end
   end
+
+  context 'validation' do
+    it 'does not allow empty values for certain fields' do
+      instance.identifier = nil
+      instance.width = nil
+      instance.height = nil
+      expect(instance.valid?).to be false
+      expect(instance.errors.keys).to include(:identifier, :width, :height)
+    end
+  end
 end
