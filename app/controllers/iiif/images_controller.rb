@@ -42,7 +42,8 @@ class Iiif::ImagesController < ApplicationController
       return
     end
 
-    raster_opts = schema_call_result.to_h
+    # :identifer isn't part of our "raster opts"
+    raster_opts = schema_call_result.to_h.except(:identifier)
 
     # Whenever a valid resource is requested, cache the Resource identifier in
     # our ResourceAccessCache. This cache will be periodically flushed to the

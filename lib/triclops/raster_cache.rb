@@ -11,9 +11,9 @@ module Triclops
 
     # Returns the full cache path to a raster file.
     # @param raster_opts {Hash} Raster options for the desired raster.
-    def cache_path(raster_opts)
+    def cache_path(identifier, raster_opts)
       File.join(
-        cache_directory_for_identifier(raster_opts[:identifier]),
+        cache_directory_for_identifier(identifier),
         raster_opts[:region],
         raster_opts[:size],
         raster_opts[:rotation].to_s,

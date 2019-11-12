@@ -19,7 +19,6 @@ RSpec.describe Resource, type: :model do
   end
   let(:raster_opts) do
     {
-      identifier: instance.identifier,
       region: 'full',
       size: 'full',
       rotation: 0,
@@ -45,12 +44,12 @@ RSpec.describe Resource, type: :model do
       instance.raster(featured_raster_opts, true) { |_raster_file| }
     end
 
-    it 'yields a cached raster when cache_enabled arg is true' do
+    it 'runs yield_cached_raster when cache_enabled arg is true' do
       expect(instance).to receive(:yield_cached_raster).with(raster_opts)
       instance.raster(raster_opts, true) { |_raster_file| }
     end
 
-    it 'yields an uncached raster when cache_enabled arg is false' do
+    it 'runs yield_uncached_raster when cache_enabled arg is false' do
       expect(instance).to receive(:yield_uncached_raster).with(raster_opts)
       instance.raster(raster_opts, false) { |_raster_file| }
     end
@@ -202,10 +201,19 @@ RSpec.describe Resource, type: :model do
   end
 
   context '#cache_path' do
-    it 'works as expected' do
-      expect(instance.cache_path(raster_opts.merge(identifier: instance.identifier))).to eq('/Users/eric/Columbia/Columbia-Projects/repositories/triclops/tmp/triclops_test_cache/raster/9f/86/d0/81/9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08/full/full/0/color.png')
+    it 'works as expected for a non-placeholder location_uri' do
+      expect(instance.cache_path(raster_opts)).to eq(
+        '/Users/eric/Columbia/Columbia-Projects/repositories/triclops/tmp/triclops_test_cache/raster/9f/86/d0/81'\
+        '/9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08/full/full/0/color.png'
+      )
+    end
+
+    it 'works as expected for a placeholder location_uri' do
       instance.location_uri = 'placeholder://cool'
-      expect(instance.cache_path(raster_opts.merge(identifier: instance.identifier))).to eq('/Users/eric/Columbia/Columbia-Projects/repositories/triclops/tmp/triclops_test_cache/raster/63/0f/dc/84/630fdc84e37d2c114ca6afdccb24fdc534bdd5f363745fe26833607fb067a080/full/full/0/color.png')
+      expect(instance.cache_path(raster_opts)).to eq(
+        '/Users/eric/Columbia/Columbia-Projects/repositories/triclops/tmp/triclops_test_cache/raster/63/0f/dc/84/'\
+        '630fdc84e37d2c114ca6afdccb24fdc534bdd5f363745fe26833607fb067a080/full/full/0/color.png'
+      )
     end
   end
 
@@ -266,18 +274,12 @@ RSpec.describe Resource, type: :model do
         format: 'png'
       }
     end
-    let(:raster_opts1) do
-      raster_opts_base.merge(identifier: resource1.identifier)
-    end
-    let(:raster_opts2) do
-      raster_opts_base.merge(identifier: resource2.identifier)
-    end
     context 'should use different cache paths when both resources have the same NON-"placeholder://"-prefixed location_uri value' do
       it do
         resource1_raster_path = nil
         resource2_raster_path = nil
-        resource1.raster(raster_opts1, true) { |raster_file| resource1_raster_path = raster_file.path }
-        resource2.raster(raster_opts2, true) { |raster_file| resource2_raster_path = raster_file.path }
+        resource1.raster(raster_opts, true) { |raster_file| resource1_raster_path = raster_file.path }
+        resource2.raster(raster_opts, true) { |raster_file| resource2_raster_path = raster_file.path }
         expect(resource1_raster_path).not_to eq(resource2_raster_path)
       end
     end
@@ -287,8 +289,8 @@ RSpec.describe Resource, type: :model do
       it do
         resource1_raster_path = nil
         resource2_raster_path = nil
-        resource1.raster(raster_opts1, true) { |raster_file| resource1_raster_path = raster_file.path }
-        resource2.raster(raster_opts2, true) { |raster_file| resource2_raster_path = raster_file.path }
+        resource1.raster(raster_opts, true) { |raster_file| resource1_raster_path = raster_file.path }
+        resource2.raster(raster_opts, true) { |raster_file| resource2_raster_path = raster_file.path }
         expect(resource1_raster_path).to eq(resource2_raster_path)
       end
     end

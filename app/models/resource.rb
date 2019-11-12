@@ -6,7 +6,7 @@ class Resource < ApplicationRecord
 
   # Yields a block with a File reference to the specified raster.
   # @param raster_opts [Hash]
-  #   A hash of IIIF options (e.g. {identifer: '...', region: '...', size: '...', etc. }).
+  #   A hash of IIIF options (e.g. {region: '...', size: '...', etc. }).
   # @param cache_enabled [boolean]
   #   If true, serves a cached version of the raster (when available) or
   #   generates and caches a new raster.  If false, always generates a new
@@ -65,8 +65,10 @@ class Resource < ApplicationRecord
   end
 
   def cache_path(raster_opts)
-    return Triclops::RasterCache.instance.cache_path(raster_opts.merge(identifier: self.location_uri)) if location_uri_is_placeholder?
-    Triclops::RasterCache.instance.cache_path(raster_opts)
+    Triclops::RasterCache.instance.cache_path(
+      location_uri_is_placeholder? ? self.location_uri : self.identifier,
+      raster_opts
+    )
   end
 
   def yield_cached_raster(raster_opts)
