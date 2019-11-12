@@ -237,13 +237,6 @@ RSpec.describe Resource, type: :model do
       expect(instance.valid?).to be false
       expect(instance.errors.keys).to include(:identifier, :width, :height, :location_uri)
     end
-
-    it 'allows empty width and height values if location starts with "placeholder://"' do
-      instance.location_uri = 'placeholder://value'
-      instance.width = nil
-      instance.height = nil
-      expect(instance.valid?).to be true
-    end
   end
 
   context 'two resources with the same location_uri value' do
