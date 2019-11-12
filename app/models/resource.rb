@@ -1,7 +1,8 @@
 class Resource < ApplicationRecord
   include Triclops::Resource::Info
 
-  validates :identifier, :location_uri, :width, :height, presence: true
+  validates :identifier, :location_uri, presence: true
+  validates :width, :height, presence: true, unless: -> { self.location_uri.start_with?('placeholder://') }
 
   # Yields a block with a File reference to the specified raster.
   # @param raster_opts [Hash]
