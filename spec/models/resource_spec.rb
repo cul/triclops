@@ -237,6 +237,15 @@ RSpec.describe Resource, type: :model do
       expect(instance.valid?).to be false
       expect(instance.errors.keys).to include(:identifier, :width, :height, :location_uri)
     end
+
+    it 'validates featured_region format, but also allows a nil value' do
+      expect(instance.valid?).to be true
+      instance.featured_region = nil
+      expect(instance.valid?).to be true
+      instance.featured_region = 'not valid!'
+      expect(instance.valid?).to be false
+      expect(instance.errors.keys).to include(:featured_region)
+    end
   end
 
   context 'two resources with the same location_uri value' do
