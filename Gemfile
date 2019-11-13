@@ -42,6 +42,8 @@ group :development, :test do
   gem 'bixby', '2.0.0.pre.beta1' # bixby (i.e. rubocop presets)
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
+  # for json structure comparison in tests
+  gem 'json_spec'
   # for factories
   gem 'factory_bot_rails', '~> 5.1'
   # rspec for testing

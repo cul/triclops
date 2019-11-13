@@ -19,7 +19,7 @@ class Iiif::ImagesController < ApplicationController
   before_action :set_resource_or_handle_not_found, only: [:info, :raster, :test_viewer]
 
   def info
-    render json: @resource.info(
+    render json: @resource.iiif_info(
       iiif_info_url(@resource.identifier)[0...-10], # chop off last 10 characters to remove "/info.json"
       @resource.width,
       @resource.height,

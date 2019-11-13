@@ -203,15 +203,15 @@ RSpec.describe Resource, type: :model do
   context '#cache_path' do
     it 'works as expected for a non-placeholder location_uri' do
       expect(instance.cache_path(raster_opts)).to eq(
-        '/Users/eric/Columbia/Columbia-Projects/repositories/triclops/tmp/triclops_test_cache/raster/9f/86/d0/81'\
-        '/9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08/full/full/0/color.png'
+        "#{TRICLOPS[:raster_cache][:directory]}/9f/86/d0/81/"\
+        '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08/full/full/0/color.png'
       )
     end
 
     it 'works as expected for a placeholder location_uri' do
       instance.location_uri = 'placeholder://cool'
       expect(instance.cache_path(raster_opts)).to eq(
-        '/Users/eric/Columbia/Columbia-Projects/repositories/triclops/tmp/triclops_test_cache/raster/63/0f/dc/84/'\
+        "#{TRICLOPS[:raster_cache][:directory]}/63/0f/dc/84/"\
         '630fdc84e37d2c114ca6afdccb24fdc534bdd5f363745fe26833607fb067a080/full/full/0/color.png'
       )
     end

@@ -1,8 +1,7 @@
 class Resource < ApplicationRecord
-  include Triclops::Resource::Info
-
-  validates :identifier, :location_uri, :width, :height, presence: true
-  validates :featured_region, format: { with: /\d+,\d+,\d+,\d+/ }, allow_blank: true
+  include Triclops::Resource::IiifInfo
+  include Triclops::Resource::AsJson
+  include Triclops::Resource::Validations
 
   # Yields a block with a File reference to the specified raster.
   # @param raster_opts [Hash]
