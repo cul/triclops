@@ -40,7 +40,9 @@ yarn-debug.log*
 /coverage
 
 # Ignore config files with sensitive data
+triclops.yml
 database.yml
+redis.yml
 
 # macOS Files
 .DS_Store

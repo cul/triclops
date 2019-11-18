@@ -1,5 +1,6 @@
 namespace :triclops do
   namespace :setup do
+
     desc "Set up application config files"
     task :config_files do
       config_template_dir = Rails.root.join('config', 'templates')
@@ -16,5 +17,34 @@ namespace :triclops do
         end
       end
     end
+
+    desc "Set up sample records"
+    task sample_resources: :environment do
+      [
+        {
+          identifier: 'sample',
+          location_uri: 'railsroot://' + File.join('spec', 'fixtures', 'files', 'sample.jpg'),
+          width: 1920,
+          height: 3125,
+          featured_region: '320,616,1280,1280'
+        },
+        {
+          identifier: 'sample-with-transparency',
+          location_uri: 'railsroot://' + File.join('spec', 'fixtures', 'files', 'sample-with-transparency.png'),
+          width: 1920,
+          height: 1920,
+          featured_region: '320,320,1280,1280'
+        }
+      ].each do |resource_params|
+        identifier = resource_params[:identifier]
+        if Resource.find_by(identifier: identifier).nil?
+          Resource.create!(resource_params)
+          puts Rainbow("Resource [#{identifier}] created.").green
+        else
+          puts Rainbow("Resource [#{identifier}] skipped (already exists).").blue.bright
+        end
+      end
+    end
+
   end
 end

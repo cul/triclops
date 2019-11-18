@@ -1,6 +1,10 @@
 namespace :triclops do
   require 'rspec/core/rake_task'
   RSpec::Core::RakeTask.new(:rspec) do |spec|
+    # Right now, 'redis' is the only available exclusion type
+    exclusions = ENV['EXCLUDE_SPECS'].to_s.split(',') & ['redis']
+    spec.rspec_opts = exclusions.map { |exclude| "--tag ~@#{exclude}" }
+
     spec.rspec_opts << '--backtrace' if ENV['CI']
   end
 

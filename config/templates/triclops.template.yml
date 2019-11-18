@@ -1,0 +1,19 @@
+development:
+  raster_cache:
+    enabled: true
+    directory: <%= Rails.root.join('tmp', 'triclops_development_cache', 'raster') %>
+  lock:
+    lock_timeout: 10
+    retry_delay: 1
+    retry_count: 11
+  tmp_directory: <%= Rails.root.join('tmp', 'triclops_development_tmp') %>
+
+test:
+  raster_cache:
+    enabled: true
+    directory: <%= Rails.root.join('tmp', 'triclops_test_cache', 'raster') %>
+  lock:
+    lock_timeout: 10
+    retry_delay: 1
+    retry_count: 11
+  tmp_directory: <%= Rails.root.join('tmp', 'triclops_test_tmp') %>

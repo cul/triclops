@@ -1,0 +1,42 @@
+dist: bionic
+language: ruby
+sudo: false
+cache:
+  bundler: true
+  npm: true
+  yarn: true
+  directories:
+   - /tmp/vips-install
+
+rvm:
+  - 2.6.4
+
+env:
+  global:
+    - NOKOGIRI_USE_SYSTEM_LIBRARIES=true
+  matrix:
+    - NODE_VERSION=10
+    - NODE_VERSION=12
+
+services:
+  - redis-server
+
+before_install:
+  - "echo 'gem: --no-document' > ~/.gemrc"
+  - gem update --system
+  - gem install bundler
+  - cd /tmp
+  - wget https://raw.githubusercontent.com/cul/imogen/519af4aea5323990d2d0300889fa4b8830737a69/travis/install-vips-bionic.sh
+  - chmod u+x ./install-vips-bionic.sh
+  - ./install-vips-bionic.sh
+  - vips --version
+  - cd $TRAVIS_BUILD_DIR
+
+before_script:
+  - nvm install $NODE_VERSION
+  - nvm use $NODE_VERSION
+  - npm install -g yarn
+  - npm --version
+  - yarn install
+
+script: bundle exec rake triclops:ci

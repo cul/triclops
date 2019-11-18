@@ -3,6 +3,13 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby '2.6.4'
 
+# Parameter validation
+gem 'dry-schema', '~> 1.4'
+# Use imogen for generating images
+gem 'imogen', '0.2.0'
+# gem 'imogen', path: '../imogen'
+# gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'libvips'
+
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.7'
 # Use Puma as the app server
@@ -17,8 +24,10 @@ gem 'sass-rails', '~> 5'
 gem 'sqlite3', '~> 1.4'
 # Transpile app-like JavaScript. Read more: https://github.com/rails/webpacker
 gem 'webpacker', '~> 4.0'
-# Use Redis adapter to run Action Cable in production
-# gem 'redis', '~> 4.0'
+# Redis key-value store
+gem 'redis', '~> 4.1'
+gem 'redlock', '~> 1.0'
+
 # Use Active Model has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 
@@ -33,8 +42,12 @@ group :development, :test do
   gem 'bixby', '2.0.0.pre.beta1' # bixby (i.e. rubocop presets)
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
+  # for factories
+  gem 'factory_bot_rails', '~> 5.1'
   # rspec for testing
-  gem 'rspec-rails', '~> 3.8'
+  gem 'rspec-rails', '~> 3.9'
+  # simplecov for test coverage
+  gem 'simplecov', '~> 0.17'
 end
 
 group :development do
