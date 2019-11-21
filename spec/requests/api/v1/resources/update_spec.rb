@@ -23,10 +23,10 @@ RSpec.describe "update resource", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "returns a 400 unprocessable entity response for an invalid attribute update" do
+    it "returns a 400 bad_request entity response for an invalid attribute update" do
       FactoryBot.create(:resource, identifier: identifier)
       patch patch_url, params: { resource: invalid_update_attributes }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:bad_request)
     end
   end
 end

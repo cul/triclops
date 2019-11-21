@@ -16,9 +16,9 @@ module Api
         @resource = Resource.new(create_params)
 
         if @resource.save
-          render json: { dynamic_field: @resource }, status: :created
+          render json: { resource: @resource }, status: :created
         else
-          render json: errors(@resource.errors.full_messages), status: :unprocessable_entity
+          render json: errors(@resource.errors.full_messages), status: :bad_request
         end
       end
 
@@ -28,7 +28,7 @@ module Api
         if @resource.update(update_params)
           render json: { resource: @resource }, status: :ok
         else
-          render json: errors(@resource.errors.full_messages), status: :unprocessable_entity
+          render json: errors(@resource.errors.full_messages), status: :bad_request
         end
       end
 
@@ -38,7 +38,7 @@ module Api
         if @resource.destroy
           head :no_content
         else
-          render json: errors('Deleting was unsuccessful.'), status: :unprocessable_entity
+          render json: errors('Deleting was unsuccessful.'), status: :bad_request
         end
       end
 

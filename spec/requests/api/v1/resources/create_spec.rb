@@ -28,9 +28,9 @@ RSpec.describe "create resource", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "returns a 400 unprocessable entity response for invalid attributes" do
+    it "returns a 400 bad request response for invalid attributes" do
       post "/api/v1/resources.json", params: { resource: invalid_create_attributes }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:bad_request)
     end
   end
 end
