@@ -23,7 +23,10 @@ Metrics/BlockLength:
 
 Metrics/ParameterLists:
   Exclude:
-    - 'app/models/concerns/triclops/resource/info.rb'
+    - 'app/models/concerns/triclops/resource/iiif_info.rb'
+
+RSpec/AnyInstance:
+  Enabled: false
 
 RSpec/ExampleLength:
   Enabled: false

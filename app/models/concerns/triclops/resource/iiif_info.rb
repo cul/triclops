@@ -1,12 +1,12 @@
 module Triclops
   module Resource
-    module Info
+    module IiifInfo
       extend ActiveSupport::Concern
 
       # Returns a IIIF 2.1 info hash about this image resource.
       # @param id_url [String] Identifying URL for this resource.
       # @return [Hash] IIIF 2.1 structured info response.
-      def info(id_url, width, height, sizes, formats, qualities, tile_size)
+      def iiif_info(id_url, width, height, sizes, formats, qualities, tile_size)
         {
           '@context': 'http://iiif.io/api/image/2/context.json',
           '@id': id_url,

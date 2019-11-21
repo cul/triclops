@@ -19,7 +19,6 @@ RSpec.describe Resource, type: :model do
   end
   let(:raster_opts) do
     {
-      identifier: instance.identifier,
       region: 'full',
       size: 'full',
       rotation: 0,
@@ -45,12 +44,12 @@ RSpec.describe Resource, type: :model do
       instance.raster(featured_raster_opts, true) { |_raster_file| }
     end
 
-    it 'yields a cached raster when cache_enabled arg is true' do
+    it 'runs yield_cached_raster when cache_enabled arg is true' do
       expect(instance).to receive(:yield_cached_raster).with(raster_opts)
       instance.raster(raster_opts, true) { |_raster_file| }
     end
 
-    it 'yields an uncached raster when cache_enabled arg is false' do
+    it 'runs yield_uncached_raster when cache_enabled arg is false' do
       expect(instance).to receive(:yield_uncached_raster).with(raster_opts)
       instance.raster(raster_opts, false) { |_raster_file| }
     end
@@ -134,7 +133,22 @@ RSpec.describe Resource, type: :model do
 
       it "raises an error for a file that doesn't exist" do
         allow(instance).to receive(:location_uri).and_return('railsroot://nofile.png')
-        expect { instance.with_source_image_file }.to raise_error(Errno::ENOENT)
+        expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
+      end
+    end
+
+    context "with a placeholder:// path" do
+      it "returns the path to an existing file" do
+        allow(instance).to receive(:location_uri).and_return('placeholder://sound')
+
+        instance.with_source_image_file do |file|
+          expect(Rails.root.join('app', 'assets', 'images', 'placeholders', 'sound.png').to_s).to eq(file.path)
+        end
+      end
+
+      it "raises an error for a file that doesn't exist" do
+        allow(instance).to receive(:location_uri).and_return('placeholder://nofile')
+        expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
       end
     end
 
@@ -153,13 +167,13 @@ RSpec.describe Resource, type: :model do
 
       it "raises an error for a file that doesn't exist" do
         allow(instance).to receive(:location_uri).and_return('file:///no/file/here.png')
-        expect { instance.with_source_image_file }.to raise_error(Errno::ENOENT)
+        expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
       end
     end
 
     it "raises an error for an unsupported protocol" do
       allow(instance).to receive(:location_uri).and_return('abc://what/does/this/protocol/even/mean.png')
-      expect { instance.with_source_image_file }.to raise_error(Errno::ENOENT)
+      expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
     end
   end
 
@@ -183,6 +197,104 @@ RSpec.describe Resource, type: :model do
       ).not_to eq(
         described_class.generate_raster_tempfile_path(extension)
       )
+    end
+  end
+
+  context '#cache_path' do
+    it 'works as expected for a non-placeholder location_uri' do
+      expect(instance.cache_path(raster_opts)).to eq(
+        "#{TRICLOPS[:raster_cache][:directory]}/9f/86/d0/81/"\
+        '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08/full/full/0/color.png'
+      )
+    end
+
+    it 'works as expected for a placeholder location_uri' do
+      instance.location_uri = 'placeholder://cool'
+      expect(instance.cache_path(raster_opts)).to eq(
+        "#{TRICLOPS[:raster_cache][:directory]}/63/0f/dc/84/"\
+        '630fdc84e37d2c114ca6afdccb24fdc534bdd5f363745fe26833607fb067a080/full/full/0/color.png'
+      )
+    end
+  end
+
+  context '#location_uri_is_placeholder?' do
+    it 'returns false when location uri does not start with placeholder://' do
+      expect(instance.location_uri_is_placeholder?).to eq(false)
+    end
+
+    it 'returns true when location uri starts with placeholder://' do
+      instance.location_uri = 'placeholder://cool'
+      expect(instance.location_uri_is_placeholder?).to eq(true)
+    end
+  end
+
+  context 'validation' do
+    it 'does not allow empty values for certain fields' do
+      instance.identifier = nil
+      instance.width = nil
+      instance.height = nil
+      instance.location_uri = nil
+      expect(instance.valid?).to be false
+      expect(instance.errors.keys).to include(:identifier, :width, :height, :location_uri)
+    end
+
+    it 'validates featured_region format, but also allows a nil value' do
+      expect(instance.valid?).to be true
+      instance.featured_region = nil
+      expect(instance.valid?).to be true
+      instance.featured_region = 'not valid!'
+      expect(instance.valid?).to be false
+      expect(instance.errors.keys).to include(:featured_region)
+    end
+  end
+
+  context 'two resources with the same location_uri value' do
+    let(:resource1) do
+      Resource.new({
+        identifier: 'id1',
+        location_uri: location_uri,
+        width: width,
+        height: height,
+        featured_region: featured_region
+      })
+    end
+    let(:resource2) do
+      Resource.new({
+        identifier: 'id2',
+        location_uri: location_uri,
+        width: width,
+        height: height,
+        featured_region: featured_region
+      })
+    end
+    let(:raster_opts_base) do
+      {
+        region: 'full',
+        size: 'full',
+        rotation: 0,
+        quality: 'color',
+        format: 'png'
+      }
+    end
+    context 'should use different cache paths when both resources have the same NON-"placeholder://"-prefixed location_uri value' do
+      it do
+        resource1_raster_path = nil
+        resource2_raster_path = nil
+        resource1.raster(raster_opts, true) { |raster_file| resource1_raster_path = raster_file.path }
+        resource2.raster(raster_opts, true) { |raster_file| resource2_raster_path = raster_file.path }
+        expect(resource1_raster_path).not_to eq(resource2_raster_path)
+      end
+    end
+
+    context 'should use the same cache path when both resources have the same "placeholder://"-prefixed location_uri value' do
+      let(:location_uri) { 'placeholder://sound' }
+      it do
+        resource1_raster_path = nil
+        resource2_raster_path = nil
+        resource1.raster(raster_opts, true) { |raster_file| resource1_raster_path = raster_file.path }
+        resource2.raster(raster_opts, true) { |raster_file| resource2_raster_path = raster_file.path }
+        expect(resource1_raster_path).to eq(resource2_raster_path)
+      end
     end
   end
 end

@@ -18,7 +18,7 @@ RSpec.describe Resource, type: :model do
     })
   end
 
-  context "#info" do
+  context "#iiif_info" do
     let(:id_url) { 'http://localhost:3000/iiif/2/' + identifier }
     let(:sizes) do
       [
@@ -48,7 +48,7 @@ RSpec.describe Resource, type: :model do
           'tiles': [{ 'width': tile_size, 'scaleFactors': [1] }],
           'profile': ['http://iiif.io/api/image/2/level2.json', { 'formats': formats, 'qualities': qualities }]
         }
-      ).to eq(instance.info(id_url, width, height, sizes, formats, qualities, tile_size))
+      ).to eq(instance.iiif_info(id_url, width, height, sizes, formats, qualities, tile_size))
     end
   end
 end

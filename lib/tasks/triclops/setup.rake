@@ -34,6 +34,13 @@ namespace :triclops do
           width: 1920,
           height: 1920,
           featured_region: '320,320,1280,1280'
+        },
+        {
+          identifier: 'sound-resource',
+          location_uri: 'placeholder://sound',
+          width: 2292,
+          height: 2292,
+          featured_region: '0,0,1280,1280'
         }
       ].each do |resource_params|
         identifier = resource_params[:identifier]

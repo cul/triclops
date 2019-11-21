@@ -19,7 +19,7 @@ class Iiif::ImagesController < ApplicationController
   before_action :set_resource_or_handle_not_found, only: [:info, :raster, :test_viewer]
 
   def info
-    render json: @resource.info(
+    render json: @resource.iiif_info(
       iiif_info_url(@resource.identifier)[0...-10], # chop off last 10 characters to remove "/info.json"
       @resource.width,
       @resource.height,
@@ -42,7 +42,8 @@ class Iiif::ImagesController < ApplicationController
       return
     end
 
-    raster_opts = schema_call_result.to_h
+    # :identifer isn't part of our "raster opts"
+    raster_opts = schema_call_result.to_h.except(:identifier)
 
     # Whenever a valid resource is requested, cache the Resource identifier in
     # our ResourceAccessCache. This cache will be periodically flushed to the
@@ -56,7 +57,7 @@ class Iiif::ImagesController < ApplicationController
     Triclops::ResourceAccessCache.instance.add(@resource.identifier) if TRICLOPS[:raster_cache][:enabled]
 
     @resource.raster(raster_opts, TRICLOPS[:raster_cache][:enabled]) do |raster_file|
-      send_raster_file(raster_file, raster_opts)
+      send_raster_file(raster_file, raster_opts, @resource.updated_at)
     end
   end
 
@@ -83,12 +84,11 @@ class Iiif::ImagesController < ApplicationController
       }
     end
 
-    def send_raster_file(raster_file, raster_opts)
+    def send_raster_file(raster_file, raster_opts, modification_time)
       expires_in 365.days, public: true
       response['Content-Length'] = File.size(raster_file.path).to_s
-      raster_modification_time = File.mtime(raster_file.path)
-      response['Last-Modified'] = raster_modification_time.httpdate
-      response['ETag'] = format('"%x"', raster_modification_time)
+      response['Last-Modified'] = modification_time.httpdate
+      response['ETag'] = format('"%x"', modification_time)
       # We can't use send_file on a temporary file that's deleted when we're
       # done with it, since send_file passes along file serving to the
       # webserver, so when the cache is turned off we'll use send_data.

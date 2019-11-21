@@ -66,14 +66,18 @@ RSpec.describe Triclops::ResourceAccessCache do
       instance.clear
     }
 
-    it 'clears all added entries' do
+    it 'clears all added entries when count = 1' do
       instance.add('a')
       expect(instance.all.sort).to eq(['a'])
       instance.clear
       expect(instance.all).to eq([])
+    end
+
+    it 'clears all added entries when count > 1' do
+      instance.add('a')
       instance.add('b')
       instance.add('c')
-      expect(instance.all.sort).to eq(['b', 'c'])
+      expect(instance.all.sort).to eq(['a', 'b', 'c'])
       instance.clear
       expect(instance.all).to eq([])
     end
