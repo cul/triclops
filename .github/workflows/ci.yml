@@ -11,19 +11,27 @@ jobs:
       matrix:
         ruby-version: ['2.6.4']
         node: ['10', '12']
-        redis-version: [3]
+        redis-version: [4]
     env:
       RAILS_ENV: test
       NOKOGIRI_USE_SYSTEM_LIBRARIES: true
+    services:
+      redis:
+        image: redis:${{ matrix.redis-version }}
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps port 6379 on service container to the host
+          - 6379:6379
 
     steps:
       - uses: actions/checkout@v2
       - name: Install libxslt for nokogiri gem (required for version < 1.11)
         run: sudo apt-get install -y libxml2-dev libxslt-dev
-      - name: Start Redis
-        uses: supercharge/redis-github-action@1.2.0
-        with:
-          redis-version: ${{ matrix.redis-version }}
       - name: Install libvips
         run: sudo apt-get install -y libvips42
       - name: Add --no-document option to .gemrc file to speed up bundle install
