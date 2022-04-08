@@ -1,8 +1,6 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '2.6.4'
-
 # Parameter validation
 gem 'dry-schema', '~> 1.4'
 # Use imogen for generating images
@@ -38,8 +36,8 @@ gem 'redlock', '~> 1.0'
 gem 'bootsnap', '>= 1.4.2', require: false
 
 group :development, :test do
-  # rubocop + presets
-  gem 'bixby', '2.0.0.pre.beta1' # bixby (i.e. rubocop presets)
+  # rubocop + CUL presets
+  gem 'rubocul', '~> 4.0.0'
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
   # for json structure comparison in tests

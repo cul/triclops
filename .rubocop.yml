@@ -1,8 +1,10 @@
 inherit_gem:
-  bixby: bixby_default.yml
+  rubocul: rubocul_default.yml
+
+inherit_from: .rubocop_todo.yml
 
 AllCops:
-  TargetRubyVersion: 2.6.4
+  TargetRubyVersion: 2.7.5
   TargetRailsVersion: 6.0.0
   DisplayCopNames: true
   Exclude:
@@ -14,7 +16,7 @@ AllCops:
     - 'lib/tasks/triclops/**/*'
     - 'tmp/**/*'
 
-Layout/IndentHash:
+Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
 
 Metrics/BlockLength:
@@ -37,9 +39,6 @@ RSpec/MessageSpies:
 Style/BlockDelimiters:
   Exclude:
     - 'spec/**/*'
-
-Style/BracesAroundHashParameters:
-  Enabled: false
 
 Style/FrozenStringLiteralComment:
   Enabled: false
