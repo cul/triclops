@@ -22,6 +22,7 @@ Layout/FirstHashElementIndentation:
 Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
+    - 'config/environments/*'
 
 Metrics/ParameterLists:
   Exclude:
