@@ -12,8 +12,8 @@ class Iiif::ImagesController < ApplicationController
   RECOMMENDED_SIZES = [256, 512, 1024, 1280].freeze
   TILE_SIZE = 512
   # Note: not supporting 'square' right now because Imogen doesn't support square
-  ALLOWED_REGIONS = /full|featured|\d+,\d+,\d+,\d+|pct:\d+,\d+,\d+,\d+/.freeze
-  ALLOWED_SIZES = /full|max|\d+,|,\d+|pct:\d+|\d+,\d+|!\d+,\d+/.freeze
+  ALLOWED_REGIONS = /full|featured|\d+,\d+,\d+,\d+|pct:\d+,\d+,\d+,\d+/
+  ALLOWED_SIZES = /full|max|\d+,|,\d+|pct:\d+|\d+,\d+|!\d+,\d+/
 
   before_action :add_cors_header!, only: [:info]
   before_action :set_resource_or_handle_not_found, only: [:info, :raster, :test_viewer]

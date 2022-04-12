@@ -8,6 +8,8 @@ gem 'imogen', '0.2.0'
 # gem 'imogen', path: '../imogen'
 # gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'libvips'
 
+# Explicitly including io-wait dependency to match default version of the gem that comes with Ruby 3.0.
+gem 'io-wait', '0.2.0'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.7'
 # Use Puma as the app server
@@ -52,7 +54,7 @@ group :development, :test do
 end
 
 group :development do
-  gem 'listen', '>= 3.0.5', '< 3.2'
+  gem 'listen', '~> 3.3'
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'
   gem 'spring-watcher-listen', '~> 2.0.0'
