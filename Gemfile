@@ -13,7 +13,7 @@ gem 'jbuilder', '~> 2.7'
 # Use Puma as the app server
 gem 'puma', '~> 3.11'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 6.1.0'
+gem 'rails', '~> 7.0.2'
 # Rainbow for text coloring
 gem 'rainbow', '~> 3.0'
 # Use SCSS for stylesheets
@@ -45,7 +45,8 @@ group :development, :test do
   # for factories
   gem 'factory_bot_rails', '~> 5.1'
   # rspec for testing
-  gem 'rspec-rails', '~> 5.0'
+  gem 'rspec', '>= 3.11'
+  gem 'rspec-rails', '~> 5.1'
   # simplecov for test coverage
   gem 'simplecov', '~> 0.17'
 end
