@@ -4,7 +4,7 @@ Triclops is a cool IIIF server.
 
 ## Requirements
 
-- Ruby 2.6
+- Ruby 3
 - Redis 3
 - libvips (for Imogen image conversion gem dependency)
 
