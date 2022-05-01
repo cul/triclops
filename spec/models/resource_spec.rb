@@ -235,7 +235,7 @@ RSpec.describe Resource, type: :model do
       instance.height = nil
       instance.location_uri = nil
       expect(instance.valid?).to be false
-      expect(instance.errors.keys).to include(:identifier, :width, :height, :location_uri)
+      expect(instance.errors.attribute_names).to include(:identifier, :width, :height, :location_uri)
     end
 
     it 'validates featured_region format, but also allows a nil value' do
@@ -244,7 +244,7 @@ RSpec.describe Resource, type: :model do
       expect(instance.valid?).to be true
       instance.featured_region = 'not valid!'
       expect(instance.valid?).to be false
-      expect(instance.errors.keys).to include(:featured_region)
+      expect(instance.errors.attribute_names).to include(:featured_region)
     end
   end
 

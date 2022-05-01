@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ruby-version: ['2.6.4']
+        ruby-version: ['3.0.3']
         node: ['10', '12']
         redis-version: [4]
     env:

@@ -33,7 +33,7 @@ RSpec.describe Resource, type: :model do
 
       it 'has errors when required fields are missing' do
         expect(instance).not_to be_valid
-        expect(instance.errors.keys).to include(:identifier, :location_uri, :width, :height)
+        expect(instance.errors.attribute_names).to include(:identifier, :location_uri, :width, :height)
       end
     end
 
@@ -41,7 +41,7 @@ RSpec.describe Resource, type: :model do
       let(:featured_region) { 'nooooooooooooooooo' }
       it 'has an error when featured_region format is invalid' do
         expect(instance).not_to be_valid
-        expect(instance.errors.keys).to eq([:featured_region])
+        expect(instance.errors.attribute_names).to eq([:featured_region])
       end
     end
 
@@ -51,7 +51,7 @@ RSpec.describe Resource, type: :model do
         let(:height) { -2 }
         it do
           expect(instance).not_to be_valid
-          expect(instance.errors.keys).to include(:width, :height)
+          expect(instance.errors.attribute_names).to include(:width, :height)
         end
       end
 
@@ -60,7 +60,7 @@ RSpec.describe Resource, type: :model do
         let(:height) { 0 }
         it do
           expect(instance).not_to be_valid
-          expect(instance.errors.keys).to include(:width, :height)
+          expect(instance.errors.attribute_names).to include(:width, :height)
         end
       end
 
@@ -69,7 +69,7 @@ RSpec.describe Resource, type: :model do
         let(:height) { 2.5 }
         it do
           expect(instance).not_to be_valid
-          expect(instance.errors.keys).to include(:width, :height)
+          expect(instance.errors.attribute_names).to include(:width, :height)
         end
       end
     end

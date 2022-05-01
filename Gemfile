@@ -1,8 +1,6 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '2.6.4'
-
 # Parameter validation
 gem 'dry-schema', '~> 1.4'
 # Use imogen for generating images
@@ -10,12 +8,14 @@ gem 'imogen', '0.2.0'
 # gem 'imogen', path: '../imogen'
 # gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'libvips'
 
+# Explicitly including io-wait dependency to match default version of the gem that comes with Ruby 3.0.
+gem 'io-wait', '0.2.0'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.7'
 # Use Puma as the app server
 gem 'puma', '~> 3.11'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 6.0.4.1'
+gem 'rails', '~> 7.0.2'
 # Rainbow for text coloring
 gem 'rainbow', '~> 3.0'
 # Use SCSS for stylesheets
@@ -38,8 +38,8 @@ gem 'redlock', '~> 1.0'
 gem 'bootsnap', '>= 1.4.2', require: false
 
 group :development, :test do
-  # rubocop + presets
-  gem 'bixby', '2.0.0.pre.beta1' # bixby (i.e. rubocop presets)
+  # rubocop + CUL presets
+  gem 'rubocul', '~> 4.0.3'
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
   # for json structure comparison in tests
@@ -47,16 +47,14 @@ group :development, :test do
   # for factories
   gem 'factory_bot_rails', '~> 5.1'
   # rspec for testing
-  gem 'rspec-rails', '~> 3.9'
+  gem 'rspec', '>= 3.11'
+  gem 'rspec-rails', '~> 5.1'
   # simplecov for test coverage
   gem 'simplecov', '~> 0.17'
 end
 
 group :development do
-  gem 'listen', '>= 3.0.5', '< 3.2'
-  # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
-  gem 'spring'
-  gem 'spring-watcher-listen', '~> 2.0.0'
+  gem 'listen', '~> 3.3'
   # Access an interactive console on exception pages or by calling 'console' anywhere in the code.
   gem 'web-console', '>= 3.3.0'
 end
