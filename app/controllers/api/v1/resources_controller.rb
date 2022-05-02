@@ -49,11 +49,11 @@ module Api
         end
 
         def create_params
-          params.require(:resource).permit(:identifier, :location_uri, :width, :height, :featured_region)
+          params.require(:resource).permit(:identifier, :location_uri, :featured_region)
         end
 
         def update_params
-          params.require(:resource).permit(:location_uri, :width, :height, :featured_region)
+          params.require(:resource).permit(:location_uri, :featured_region)
         end
     end
   end
