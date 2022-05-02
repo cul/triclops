@@ -39,7 +39,7 @@ gem 'bootsnap', '>= 1.4.2', require: false
 
 group :development, :test do
   # rubocop + CUL presets
-  gem 'rubocul', '~> 4.0.3'
+  gem 'rubocul', '~> 4.0.4'
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
   # for json structure comparison in tests

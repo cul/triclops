@@ -39,6 +39,7 @@ RSpec.describe Resource, type: :model do
 
   context '#raster' do
     let(:featured_raster_opts) { raster_opts.merge(region: 'featured') }
+
     it 'internally runs preprocessing operations on the raster_opts, converting "featured" region to specific crop region' do
       expect(instance).to receive(:yield_cached_raster).with(hash_including(region: /\d+,\d+,\d+,\d+/)).and_call_original
       instance.raster(featured_raster_opts, true) { |_raster_file| }
@@ -55,13 +56,35 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#extract_featured_region!' do
+  context '#extract_missing_image_properties!' do
+    let(:width) { nil }
+    let(:height) { nil }
+    let(:featured_region) { nil }
+    let(:image_double) do
+      instance_double('image').tap do |dbl|
+        allow(dbl).to receive(:width).and_return(1920)
+        allow(dbl).to receive(:height).and_return(3125)
+      end
+    end
+
     before do
       allow(Imogen::Iiif::Region::Featured).to receive(:get).and_return([10, 20, 30, 40])
+      allow(Imogen).to receive(:with_image).and_yield(image_double)
     end
+
     it "extracts the expected region" do
-      expect(instance).to receive(:update).with({ featured_region: "10,20,20,20" })
-      instance.extract_featured_region!
+      expect(instance).to receive(:featured_region=).with("10,20,20,20")
+      instance.extract_missing_image_properties!
+    end
+
+    it "extracts the expected width" do
+      expect(instance).to receive(:width=).with(1920)
+      instance.extract_missing_image_properties!
+    end
+
+    it "extracts the expected height" do
+      expect(instance).to receive(:height=).with(3125)
+      instance.extract_missing_image_properties!
     end
   end
 
@@ -228,44 +251,29 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context 'validation' do
-    it 'does not allow empty values for certain fields' do
-      instance.identifier = nil
-      instance.width = nil
-      instance.height = nil
-      instance.location_uri = nil
-      expect(instance.valid?).to be false
-      expect(instance.errors.attribute_names).to include(:identifier, :width, :height, :location_uri)
-    end
-
-    it 'validates featured_region format, but also allows a nil value' do
-      expect(instance.valid?).to be true
-      instance.featured_region = nil
-      expect(instance.valid?).to be true
-      instance.featured_region = 'not valid!'
-      expect(instance.valid?).to be false
-      expect(instance.errors.attribute_names).to include(:featured_region)
+  context 'automatic extraction of image properties on save' do
+    it 'runs extraction as part of a save operation' do
+      expect(instance).to receive(:extract_missing_image_properties!)
+      instance.save
     end
   end
 
-  context 'two resources with the same location_uri value' do
+  context 'when two different resources have the same location_uri value' do
     let(:resource1) do
-      Resource.new({
+      FactoryBot.create(
+        :resource,
         identifier: 'id1',
         location_uri: location_uri,
-        width: width,
-        height: height,
         featured_region: featured_region
-      })
+      )
     end
     let(:resource2) do
-      Resource.new({
+      FactoryBot.create(
+        :resource,
         identifier: 'id2',
         location_uri: location_uri,
-        width: width,
-        height: height,
         featured_region: featured_region
-      })
+      )
     end
     let(:raster_opts_base) do
       {
@@ -276,8 +284,9 @@ RSpec.describe Resource, type: :model do
         format: 'png'
       }
     end
-    context 'should use different cache paths when both resources have the same NON-"placeholder://"-prefixed location_uri value' do
-      it do
+
+    context 'when both resources have the same NON-"placeholder://"-prefixed location_uri value' do
+      it 'results in two different raster cache paths for each resource' do
         resource1_raster_path = nil
         resource2_raster_path = nil
         resource1.raster(raster_opts, true) { |raster_file| resource1_raster_path = raster_file.path }
@@ -286,9 +295,9 @@ RSpec.describe Resource, type: :model do
       end
     end
 
-    context 'should use the same cache path when both resources have the same "placeholder://"-prefixed location_uri value' do
+    context 'when both resources have the SAME "placeholder://"-prefixed location_uri value' do
       let(:location_uri) { 'placeholder://sound' }
-      it do
+      it 'uses the same raster cache path for each resource' do
         resource1_raster_path = nil
         resource2_raster_path = nil
         resource1.raster(raster_opts, true) { |raster_file| resource1_raster_path = raster_file.path }

@@ -3,6 +3,8 @@ class Resource < ApplicationRecord
   include Triclops::Resource::AsJson
   include Triclops::Resource::Validations
 
+  before_save :extract_missing_image_properties!
+
   # Yields a block with a File reference to the specified raster.
   # @param raster_opts [Hash]
   #   A hash of IIIF options (e.g. {region: '...', size: '...', etc. }).
@@ -23,20 +25,25 @@ class Resource < ApplicationRecord
     end
   end
 
-  # Note: In the future, this method is unlikely to be called by Triclops because
-  # Hyacinth or Derivativo will be sending or updating crop region data.
-  def extract_featured_region!
+  def extract_missing_image_properties!
     self.with_source_image_file do |source_image_file|
       Imogen.with_image(source_image_file.path) do |img|
-        # We try to use at least 768 pixels from any image when generating a
-        # featured area crop so that we don't unintentionally get a tiny
-        # 10px x 10px crop that gets scaled up for users and looks blocky/blurry.
-        left_x, top_y, right_x, bottom_y = Imogen::Iiif::Region::Featured.get(img, 768)
-        x = left_x
-        y = top_y
-        w = right_x - left_x
-        h = bottom_y - top_y
-        self.update(featured_region: "#{x},#{y},#{w},#{h}")
+        # Extract width and height from image
+        self.width = img.width
+        self.height = img.height
+
+        # Set featured region if not already set (though it ideally should be set upon creation).
+        if self.featured_region.blank?
+          # We try to use at least 768 pixels from any image when generating a
+          # featured area crop so that we don't unintentionally get a tiny
+          # 10px x 10px crop that gets scaled up for users and looks blocky/blurry.
+          left_x, top_y, right_x, bottom_y = Imogen::Iiif::Region::Featured.get(img, 768)
+          x = left_x
+          y = top_y
+          w = right_x - left_x
+          h = bottom_y - top_y
+          self.featured_region = "#{x},#{y},#{w},#{h}"
+        end
       end
     end
   end
@@ -52,10 +59,7 @@ class Resource < ApplicationRecord
     processed_raster_opts = raster_opts.dup
 
     # {region: 'featured'} should be converted into {region: 'x,y,w,h'}
-    if processed_raster_opts[:region] == 'featured'
-      extract_featured_region! if self.featured_region.blank?
-      processed_raster_opts[:region] = self.featured_region
-    end
+    processed_raster_opts[:region] = self.featured_region if processed_raster_opts[:region] == 'featured'
 
     # {quality: 'default'} is an alias for {quality: 'color'}
     processed_raster_opts[:quality] = 'color' if processed_raster_opts[:quality] == 'default'
@@ -113,18 +117,29 @@ class Resource < ApplicationRecord
   # Yields a block with a File reference to the source image file for this Resource.
   # @yield source_image_file [File] A file holding the source image content.
   def with_source_image_file
+    raise Errno::ENOENT, 'Missing location_uri' if self.location_uri.blank?
     protocol, path = self.location_uri.split('://')
 
     case protocol
     when 'railsroot'
       yield File.new(Rails.root.join(path).to_s)
+      return
     when 'placeholder'
       yield File.new(Rails.root.join('app', 'assets', 'images', 'placeholders', path + '.png').to_s)
+      return
     when 'file'
       yield File.new(path)
-    else
-      raise Errno::ENOENT, "File not found at <#{self.location_uri}>"
+      return
     end
+    raise Errno::ENOENT, "Could not resolve file location: #{self.location_uri}"
+  end
+
+  def location_uri_is_readable?
+    with_source_image_file do |file|
+      return File.readable?(file)
+    end
+  rescue Errno::ENOENT
+    false
   end
 
   # Returns true if this Resource's location_uri points to a placeholder image value.

@@ -24,6 +24,10 @@ Metrics/BlockLength:
     - 'spec/**/*'
     - 'config/environments/*'
 
+Metrics/ClassLength:
+  Exclude:
+    - 'app/models/resource.rb'
+
 Metrics/ParameterLists:
   Exclude:
     - 'app/models/concerns/triclops/resource/iiif_info.rb'

@@ -8,13 +8,7 @@ RSpec.describe 'images#info', type: :request do
     let(:invalid_info_url) { "/iiif/2/#{invalid_identifier}/info.json" }
 
     before {
-      Resource.create!(
-        identifier: valid_identifier,
-        location_uri: 'railsroot://fake/path.png',
-        width: 1000,
-        height: 500,
-        featured_region: '0,0,100,150'
-      )
+      FactoryBot.create(:resource, identifier: valid_identifier)
     }
 
     it "returns a successful response for a valid info url, with CORS header" do

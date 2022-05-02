@@ -8,13 +8,7 @@ RSpec.describe "images#raster", type: :request do
     let(:invalid_raster_url) { "/iiif/2/#{invalid_identifier}/featured/512,/0/default.jpg" }
 
     before {
-      Resource.create!(
-        identifier: valid_identifier,
-        location_uri: 'railsroot://spec/fixtures/files/sample.jpg',
-        width: 1000,
-        height: 500,
-        featured_region: '0,0,100,150'
-      )
+      FactoryBot.create(:resource, identifier: valid_identifier)
     }
 
     context "successful response" do

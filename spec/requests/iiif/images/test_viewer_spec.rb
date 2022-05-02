@@ -8,13 +8,7 @@ RSpec.describe "images#test_viewer", type: :request do
     let(:invalid_test_viewer_url) { "/iiif/2/test_viewer/#{invalid_identifier}" }
 
     before {
-      Resource.create!(
-        identifier: valid_identifier,
-        location_uri: 'railsroot://fake/path.png',
-        width: 1000,
-        height: 500,
-        featured_region: '0,0,100,150'
-      )
+      FactoryBot.create(:resource, identifier: valid_identifier)
     }
 
     it "returns a successful response for a valid test_viewer url" do
