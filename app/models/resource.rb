@@ -3,7 +3,37 @@ class Resource < ApplicationRecord
   include Triclops::Resource::AsJson
   include Triclops::Resource::Validations
 
-  before_save :extract_missing_image_properties!
+  before_save :run_image_property_detection!
+
+  def clear_image_dimensions_if_location_uri_changed!
+    if location_uri_changed?
+      # If the location_uri changed, we need to re-scan the associated file to detect the new image
+      # file's width and height, so we'll clear those fields here so they'll be re-extracted.
+      self.width = nil
+      self.height = nil
+    end
+  end
+
+  def missing_image_info?
+    self.width.blank? || self.height.blank? || self.featured_region.blank?
+  end
+
+  def run_image_property_detection!
+    return unless missing_image_info? || location_uri_changed?
+
+    self.with_source_image_file do |source_image_file|
+      puts source_image_file.path.inspect
+      Imogen.with_image(source_image_file.path) do |img|
+        self.width = img.width
+        self.height = img.height
+
+        # If the feature region is currently blank, then we definitely need to extract a featured
+        # region -- but also, if the width changed or the height changed, any old featured region
+        # is no longer valid and we need to extract a new one.
+        extract_autodetected_region_from_image(img) if self.featured_region.blank? || width_changed? || height_changed?
+      end
+    end
+  end
 
   # Yields a block with a File reference to the specified raster.
   # @param raster_opts [Hash]
@@ -25,34 +55,13 @@ class Resource < ApplicationRecord
     end
   end
 
-  def extract_missing_image_properties!
-    self.with_source_image_file do |source_image_file|
-      Imogen.with_image(source_image_file.path) do |img|
-        # Extract width and height from image
-        self.width = img.width
-        self.height = img.height
-
-        # Set featured region if not already set (though it ideally should be set upon creation).
-        if self.featured_region.blank?
-          # We try to use at least 768 pixels from any image when generating a
-          # featured area crop so that we don't unintentionally get a tiny
-          # 10px x 10px crop that gets scaled up for users and looks blocky/blurry.
-          left_x, top_y, right_x, bottom_y = Imogen::Iiif::Region::Featured.get(img, 768)
-          x = left_x
-          y = top_y
-          w = right_x - left_x
-          h = bottom_y - top_y
-          self.featured_region = "#{x},#{y},#{w},#{h}"
-        end
-      end
-    end
-  end
-
   # Pre-processes raster opts before they're used later in the conversion chain.
   # Performs operations like converting 'featured' region into a specific crop
   # region and aliasing 'color' quality as 'default' quality.
+  #
+  # @api private
   # @param raster_opts [Hash]
-  #   A hash of IIIF options (e.g. {identifer: '...', region: '...', size: '...', etc. }).
+  #   A hash of IIIF options (e.g. {identifier: '...', region: '...', size: '...', etc. }).
   # @return [Hash] the processed version of raster_opts
   def preprocess_raster_opts(raster_opts)
     # duplicate processed_raster_opts so we don't modify the incoming argument
@@ -67,6 +76,7 @@ class Resource < ApplicationRecord
     processed_raster_opts
   end
 
+  # @api private
   def cache_path(raster_opts)
     Triclops::RasterCache.instance.cache_path(
       location_uri_is_placeholder? ? self.location_uri : self.identifier,
@@ -74,6 +84,7 @@ class Resource < ApplicationRecord
     )
   end
 
+  # @api private
   def yield_cached_raster(raster_opts)
     # Get cache path
     raster_file_path = cache_path(raster_opts)
@@ -97,6 +108,7 @@ class Resource < ApplicationRecord
     yield File.new(raster_file_path)
   end
 
+  # @api private
   def yield_uncached_raster(raster_opts)
     temp_file = nil
     raster_tempfile_path = self.class.generate_raster_tempfile_path(raster_opts[:format])
@@ -115,6 +127,8 @@ class Resource < ApplicationRecord
   end
 
   # Yields a block with a File reference to the source image file for this Resource.
+  #
+  # @api private
   # @yield source_image_file [File] A file holding the source image content.
   def with_source_image_file
     raise Errno::ENOENT, 'Missing location_uri' if self.location_uri.blank?
@@ -128,12 +142,15 @@ class Resource < ApplicationRecord
       yield File.new(Rails.root.join('app', 'assets', 'images', 'placeholders', path + '.png').to_s)
       return
     when 'file'
-      yield File.new(path)
-      return
+      if File.exist?(path)
+        yield File.new(path)
+        return
+      end
     end
     raise Errno::ENOENT, "Could not resolve file location: #{self.location_uri}"
   end
 
+  # @api private
   def location_uri_is_readable?
     with_source_image_file do |file|
       return File.readable?(file)
@@ -143,6 +160,8 @@ class Resource < ApplicationRecord
   end
 
   # Returns true if this Resource's location_uri points to a placeholder image value.
+  #
+  # @api private
   # @return [Boolean] true if location_uri starts with 'placeholder://'
   def location_uri_is_placeholder?
     return false if self.location_uri.nil?
@@ -155,5 +174,18 @@ class Resource < ApplicationRecord
       raster_tempfile_path = File.join(TRICLOPS[:tmp_directory], "#{Rails.application.class.module_parent_name.underscore}-tmp-#{SecureRandom.uuid}.#{extension}")
       return raster_tempfile_path unless File.exist?(raster_tempfile_path)
     end
+  end
+
+  # @api private
+  def extract_autodetected_region_from_image(img)
+    # We try to use at least 768 pixels from any image when generating a
+    # featured area crop so that we don't unintentionally get a tiny
+    # 10px x 10px crop that gets scaled up for users and looks blocky/blurry.
+    left_x, top_y, right_x, bottom_y = Imogen::Iiif::Region::Featured.get(img, 768)
+    x = left_x
+    y = top_y
+    w = right_x - left_x
+    h = bottom_y - top_y
+    self.featured_region = "#{x},#{y},#{w},#{h}"
   end
 end

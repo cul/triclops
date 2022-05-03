@@ -6,7 +6,7 @@ module Triclops
     # @param raster_file_path [String]
     #   A file path
     # @param raster_opts [Hash]
-    #   A hash of IIIF options (e.g. {identifer: '...', region: '...', size: '...', etc. })
+    #   A hash of IIIF options (e.g. {identifier: '...', region: '...', size: '...', etc. })
     # @return [void]
     def self.generate(source_image_file_path, raster_file_path, raster_opts)
       if File.exist?(raster_file_path)

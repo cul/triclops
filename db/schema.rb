@@ -13,6 +13,7 @@
 ActiveRecord::Schema[7.0].define(version: 2019_09_25_230507) do
   create_table "resources", force: :cascade do |t|
     t.string "identifier"
+    t.string "secondary_identifier"
     t.string "featured_region"
     t.text "location_uri"
     t.integer "width"
@@ -21,6 +22,7 @@ ActiveRecord::Schema[7.0].define(version: 2019_09_25_230507) do
     t.datetime "updated_at", null: false
     t.datetime "accessed_at", precision: nil
     t.index ["identifier"], name: "index_resources_on_identifier", unique: true
+    t.index ["secondary_identifier"], name: "index_resources_on_secondary_identifier", unique: true
   end
 
 end

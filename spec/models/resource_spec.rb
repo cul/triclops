@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Resource, type: :model do
   let(:identifier) { 'test' }
+  let(:secondary_identifier) { 'test-alternate-id' }
   let(:rails_root_relative_path) { File.join('spec', 'fixtures', 'files', 'sample.jpg') }
   let(:source_file_path) { Rails.root.join(rails_root_relative_path).to_s }
   let(:location_uri) { 'railsroot://' + rails_root_relative_path }
@@ -11,6 +12,7 @@ RSpec.describe Resource, type: :model do
   let(:instance) do
     described_class.new({
       identifier: identifier,
+      secondary_identifier: secondary_identifier,
       location_uri: location_uri,
       width: width,
       height: height,
@@ -251,29 +253,19 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context 'automatic extraction of image properties on save' do
-    it 'runs extraction as part of a save operation' do
+  context 'on save' do
+    it 'automatically extracts missing image properties' do
       expect(instance).to receive(:extract_missing_image_properties!)
-      instance.save
+      expect(instance.save).to eq(true)
     end
   end
 
   context 'when two different resources have the same location_uri value' do
     let(:resource1) do
-      FactoryBot.create(
-        :resource,
-        identifier: 'id1',
-        location_uri: location_uri,
-        featured_region: featured_region
-      )
+      FactoryBot.create(:resource, location_uri: location_uri)
     end
     let(:resource2) do
-      FactoryBot.create(
-        :resource,
-        identifier: 'id2',
-        location_uri: location_uri,
-        featured_region: featured_region
-      )
+      FactoryBot.create(:resource, location_uri: location_uri)
     end
     let(:raster_opts_base) do
       {

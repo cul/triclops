@@ -42,7 +42,7 @@ class Iiif::ImagesController < ApplicationController
       return
     end
 
-    # :identifer isn't part of our "raster opts"
+    # :identifier isn't part of our "raster opts"
     raster_opts = schema_call_result.to_h.except(:identifier)
 
     # Whenever a valid resource is requested, cache the Resource identifier in
@@ -71,7 +71,9 @@ class Iiif::ImagesController < ApplicationController
 
     def set_resource_or_handle_not_found
       identifier = params[:identifier]
-      return if (@resource = Resource.find_by(identifier: identifier))
+      return if (
+        @resource = Resource.find_by(identifier: identifier) || Resource.find_by(secondary_identifier: identifier)
+      )
 
       render json: { errors: ["Could not find resource with identifier: #{identifier}"] }, status: :not_found
     end

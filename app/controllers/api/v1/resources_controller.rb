@@ -2,7 +2,7 @@ module Api
   module V1
     class ResourcesController < ApiController
       before_action :ensure_json_request
-      before_action :set_resource, only: [:show, :update, :destroy]
+      before_action :set_resource_or_handle_not_found, only: [:show, :update, :destroy]
 
       # GET /resources/:id
       # GET /resources/:id.json
@@ -13,7 +13,7 @@ module Api
       # POST /resources
       # POST /resources.json
       def create
-        @resource = Resource.new(create_params)
+        @resource = Resource.new(create_or_update_params)
 
         if @resource.save
           render json: { resource: @resource }, status: :created
@@ -25,7 +25,7 @@ module Api
       # PATCH/PUT /resources/:id
       # PATCH/PUT /resources/:id.json
       def update
-        if @resource.update(update_params)
+        if @resource.update(create_or_update_params)
           render json: { resource: @resource }, status: :ok
         else
           render json: errors(@resource.errors.full_messages), status: :bad_request
@@ -44,16 +44,20 @@ module Api
 
       private
 
-        def set_resource
-          @resource = Resource.find_by!(identifier: params[:id])
+        def set_resource_or_handle_not_found
+          identifier = params[:id]
+          return if (
+            @resource = Resource.find_by(identifier: identifier) ||
+              Resource.find_by(secondary_identifier: identifier)
+          )
+
+          render json: {
+            errors: ["Could not find resource with identifier/secondary_identifier: #{identifier}"]
+          }, status: :not_found
         end
 
-        def create_params
-          params.require(:resource).permit(:identifier, :location_uri, :featured_region)
-        end
-
-        def update_params
-          params.require(:resource).permit(:location_uri, :featured_region)
+        def create_or_update_params
+          params.require(:resource).permit(:identifier, :secondary_identifier, :location_uri, :featured_region)
         end
     end
   end

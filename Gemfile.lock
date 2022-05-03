@@ -1,3 +1,14 @@
+PATH
+  remote: ../rubocul
+  specs:
+    rubocul (4.0.4)
+      rubocop (~> 1.26)
+      rubocop-ast
+      rubocop-graphql
+      rubocop-performance
+      rubocop-rails
+      rubocop-rspec
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -245,13 +256,6 @@ GEM
       rubocop (>= 1.7.0, < 2.0)
     rubocop-rspec (2.10.0)
       rubocop (~> 1.19)
-    rubocul (4.0.4)
-      rubocop (~> 1.26)
-      rubocop-ast
-      rubocop-graphql
-      rubocop-performance
-      rubocop-rails
-      rubocop-rspec
     ruby-progressbar (1.11.0)
     ruby-vips (2.1.4)
       ffi (~> 1.12)
@@ -321,7 +325,7 @@ DEPENDENCIES
   redlock (~> 1.0)
   rspec (>= 3.11)
   rspec-rails (~> 5.1)
-  rubocul (~> 4.0.4)
+  rubocul!
   sass-rails (~> 5)
   simplecov (~> 0.17)
   sqlite3 (~> 1.4)

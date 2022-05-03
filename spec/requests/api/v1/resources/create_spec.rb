@@ -1,10 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe "create resource", type: :request do
-  let(:identifier) { 'create-test' }
   let(:valid_create_attributes) do
     {
-      identifier: identifier,
+      identifier: 'create-test',
+      secondary_identifier: 'create-test-alt-id',
       location_uri: 'railsroot://spec/fixtures/files/sample.jpg',
       width: 1920,
       height: 3125,
