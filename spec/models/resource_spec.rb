@@ -58,7 +58,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#extract_missing_image_properties!' do
+  context '#run_image_property_extraction!' do
     let(:width) { nil }
     let(:height) { nil }
     let(:featured_region) { nil }
@@ -74,19 +74,21 @@ RSpec.describe Resource, type: :model do
       allow(Imogen).to receive(:with_image).and_yield(image_double)
     end
 
-    it "extracts the expected region" do
-      expect(instance).to receive(:featured_region=).with("10,20,20,20")
-      instance.extract_missing_image_properties!
-    end
+    context "for a resource instance that does not currently store width, height, or featured_region values" do
+      it "extracts the expected region" do
+        expect(instance).to receive(:featured_region=).with("10,20,20,20")
+        instance.run_image_property_extraction!
+      end
 
-    it "extracts the expected width" do
-      expect(instance).to receive(:width=).with(1920)
-      instance.extract_missing_image_properties!
-    end
+      it "extracts the expected width" do
+        expect(instance).to receive(:width=).with(1920)
+        instance.run_image_property_extraction!
+      end
 
-    it "extracts the expected height" do
-      expect(instance).to receive(:height=).with(3125)
-      instance.extract_missing_image_properties!
+      it "extracts the expected height" do
+        expect(instance).to receive(:height=).with(3125)
+        instance.run_image_property_extraction!
+      end
     end
   end
 
@@ -255,7 +257,7 @@ RSpec.describe Resource, type: :model do
 
   context 'on save' do
     it 'automatically extracts missing image properties' do
-      expect(instance).to receive(:extract_missing_image_properties!)
+      expect(instance).to receive(:run_image_property_extraction!)
       expect(instance.save).to eq(true)
     end
   end

@@ -125,7 +125,7 @@ GEM
       activesupport (>= 5.0)
     i18n (1.10.0)
       concurrent-ruby (~> 1.0)
-    imogen (0.2.0)
+    imogen (0.2.2)
       ruby-vips
     io-wait (0.2.0)
     jbuilder (2.11.5)
@@ -313,7 +313,7 @@ DEPENDENCIES
   byebug
   dry-schema (~> 1.4)
   factory_bot_rails (~> 5.1)
-  imogen (= 0.2.0)
+  imogen (~> 0.2.1)
   io-wait (= 0.2.0)
   jbuilder (~> 2.7)
   json_spec

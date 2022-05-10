@@ -3,7 +3,7 @@ class Resource < ApplicationRecord
   include Triclops::Resource::AsJson
   include Triclops::Resource::Validations
 
-  before_save :run_image_property_detection!
+  before_save :run_image_property_extraction!
 
   def clear_image_dimensions_if_location_uri_changed!
     if location_uri_changed?
@@ -18,11 +18,10 @@ class Resource < ApplicationRecord
     self.width.blank? || self.height.blank? || self.featured_region.blank?
   end
 
-  def run_image_property_detection!
+  def run_image_property_extraction!
     return unless missing_image_info? || location_uri_changed?
 
     self.with_source_image_file do |source_image_file|
-      puts source_image_file.path.inspect
       Imogen.with_image(source_image_file.path) do |img|
         self.width = img.width
         self.height = img.height

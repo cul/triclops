@@ -4,7 +4,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 # Parameter validation
 gem 'dry-schema', '~> 1.4'
 # Use imogen for generating images
-gem 'imogen', '0.2.0'
+gem 'imogen', '~> 0.2.1'
 # gem 'imogen', path: '../imogen'
 # gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'libvips'
 
