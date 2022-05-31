@@ -29,23 +29,34 @@ module Triclops
           errors.add(:identifier, "cannot be the same as #{secondary_identifier}")
         end
 
-        identifier_exists = ::Resource
-          .where
-          .not(self.new_record? ? {} : {id: 1})
-          .and(::Resource.where(identifier: self.identifier).or(::Resource.where(secondary_identifier: self.identifier)))
-          .count > 0
+        identifier_exists =
+          ::Resource.where
+                    .not(self.new_record? ? {} : { id: 1 })
+                    .and(
+                      ::Resource.where(identifier: self.identifier)
+                                .or(::Resource.where(secondary_identifier: self.identifier))
+                    )
+                    .count.positive?
 
-        secondary_identifier_exists = ::Resource.where
-          .not(self.new_record? ? {} : {id: 1})
-          .and(::Resource.where(identifier: self.secondary_identifier).or(::Resource.where(secondary_identifier: self.secondary_identifier)))
-          .count > 0
+        secondary_identifier_exists =
+          ::Resource.where
+                    .not(self.new_record? ? {} : { id: 1 })
+                    .and(
+                      ::Resource.where(identifier: self.secondary_identifier)
+                                .or(::Resource.where(secondary_identifier: self.secondary_identifier))
+                    )
+                    .count.positive?
 
         if identifier_exists
-          errors.add(:identifier, "is already taken by another record with the same identifier or secondary_identifier")
+          errors.add(
+            :identifier, 'is already taken by another record with the same identifier or secondary_identifier'
+          )
         end
 
         if secondary_identifier_exists
-          errors.add(:secondary_identifier, "is already taken by another record with the same identifier or secondary_identifier")
+          errors.add(
+            :secondary_identifier, 'is already taken by another record with the same identifier or secondary_identifier'
+          )
         end
       end
     end

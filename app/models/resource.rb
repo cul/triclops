@@ -6,12 +6,12 @@ class Resource < ApplicationRecord
   before_save :run_image_property_extraction!
 
   def clear_image_dimensions_if_location_uri_changed!
-    if location_uri_changed?
-      # If the location_uri changed, we need to re-scan the associated file to detect the new image
-      # file's width and height, so we'll clear those fields here so they'll be re-extracted.
-      self.width = nil
-      self.height = nil
-    end
+    return unless location_uri_changed?
+
+    # If the location_uri changed, we need to re-scan the associated file to detect the new image
+    # file's width and height, so we'll clear those fields here so they'll be re-extracted.
+    self.width = nil
+    self.height = nil
   end
 
   def missing_image_info?

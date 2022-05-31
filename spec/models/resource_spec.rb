@@ -74,7 +74,7 @@ RSpec.describe Resource, type: :model do
       allow(Imogen).to receive(:with_image).and_yield(image_double)
     end
 
-    context "for a resource instance that does not currently store width, height, or featured_region values" do
+    context "for a resource instance that DOES NOT currently store width, height, or featured_region values" do
       it "extracts the expected region" do
         expect(instance).to receive(:featured_region=).with("10,20,20,20")
         instance.run_image_property_extraction!
@@ -87,6 +87,23 @@ RSpec.describe Resource, type: :model do
 
       it "extracts the expected height" do
         expect(instance).to receive(:height=).with(3125)
+        instance.run_image_property_extraction!
+      end
+    end
+
+    context "for a resource instance that DOES currently store width, height, and featured_region values" do
+      it "does not attempt to extract the expected region" do
+        expect(instance).not_to receive(:featured_region=)
+        instance.run_image_property_extraction!
+      end
+
+      it "extracts the expected width" do
+        expect(instance).not_to receive(:width=)
+        instance.run_image_property_extraction!
+      end
+
+      it "extracts the expected height" do
+        expect(instance).not_to receive(:height=)
         instance.run_image_property_extraction!
       end
     end
