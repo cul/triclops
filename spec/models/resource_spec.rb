@@ -91,13 +91,19 @@ RSpec.describe Resource, type: :model do
       end
     end
 
-    context "for a resource instance that DOES currently store width, height, and featured_region values" do
+    context "for a previously saved resource instance that already stores width, height, and featured_region values" do
+      before do
+        # Extract properties and save before upcoming tests run
+        instance.run_image_property_extraction!
+        instance.save
+      end
+
       it "does not attempt to extract the expected region" do
         expect(instance).not_to receive(:featured_region=)
         instance.run_image_property_extraction!
       end
 
-      it "extracts the expected width" do
+      it "does not extract the expected width" do
         expect(instance).not_to receive(:width=)
         instance.run_image_property_extraction!
       end
