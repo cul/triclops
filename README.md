@@ -7,6 +7,7 @@ Triclops is a cool IIIF server.
 - Ruby 3.0
 - Redis 3
 - libvips (for Imogen image conversion gem dependency)
+- Node 10 or 12
 
 ## First-Time Setup (for developers)
 
