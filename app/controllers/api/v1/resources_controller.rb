@@ -1,7 +1,6 @@
 module Api
   module V1
     class ResourcesController < ApiController
-      before_action :ensure_json_request
       before_action :set_resource_or_handle_not_found, only: [:show, :update, :destroy]
 
       # GET /resources/:id

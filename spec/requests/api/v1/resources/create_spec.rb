@@ -6,8 +6,6 @@ RSpec.describe "create resource", type: :request do
       identifier: 'create-test',
       secondary_identifier: 'create-test-alt-id',
       location_uri: 'railsroot://spec/fixtures/files/sample.jpg',
-      width: 1920,
-      height: 3125,
       featured_region: '320,616,1280,1280'
     }
   end
