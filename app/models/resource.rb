@@ -5,10 +5,6 @@ class Resource < ApplicationRecord
 
   before_save :run_image_property_extraction!
 
-  def self.find_by_identifier_or_secondary_identifier(identifier)
-    Resource.where(identifier: identifier).or(Resource.where(secondary_identifier: identifier)).first
-  end
-
   def clear_image_dimensions_if_location_uri_changed!
     return unless location_uri_changed?
 

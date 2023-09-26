@@ -5,7 +5,7 @@ RSpec.describe 'application#home', type: :request do
     it "returns a successful response that includes the application version" do
       get '/'
       expect(response).to have_http_status(:success)
-      expect(response.body).to include(VERSION)
+      expect(response.body).to include(APP_VERSION)
     end
   end
 end

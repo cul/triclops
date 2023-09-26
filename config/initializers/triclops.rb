@@ -1,5 +1,6 @@
-# Load Triclops VERSION
-VERSION = IO.read(Rails.root.join('VERSION'))
+# Store version in a constant so that we can refer to it from anywhere without having to
+# read the VERSION file in real time.
+APP_VERSION = File.read(Rails.root.join('VERSION'))
 
 # Load Triclops config
 TRICLOPS = Rails.application.config_for(:triclops).deep_symbolize_keys

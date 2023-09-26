@@ -21,11 +21,10 @@ gem 'rainbow', '~> 3.0'
 gem 'sass-rails', '~> 5'
 # Use sqlite3 as the database for Active Record
 gem 'sqlite3', '~> 1.4'
-# Transpile app-like JavaScript. Read more: https://github.com/rails/webpacker
-gem 'webpacker', '~> 4.0'
 # Redis key-value store
 gem 'redis', '~> 4.1'
 gem 'redlock', '~> 1.0'
+gem 'vite_rails'
 
 # Use Active Model has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
