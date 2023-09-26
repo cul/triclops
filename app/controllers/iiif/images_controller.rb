@@ -72,7 +72,7 @@ class Iiif::ImagesController < ApplicationController
     def set_resource_or_handle_not_found
       identifier = params[:identifier]
       return if (
-        @resource = Resource.find_by(identifier: identifier) || Resource.find_by(secondary_identifier: identifier)
+        @resource = Resource.find_by_identifier_or_secondary_identifier(identifier)
       )
 
       render json: { errors: ["Could not find resource with identifier: #{identifier}"] }, status: :not_found

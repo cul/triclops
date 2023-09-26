@@ -4,7 +4,12 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      resources :resources
+      resources :resources, only: [:show, :destroy]
+      # Rather than using the built-in "update" controller action naming convention, we'll point
+      # put/patch to a "create_or_update" controller action to clarify what these routes do.
+      [:put, :patch].each do |method|
+        send(method, 'resources/:id' => 'resources#create_or_update', as: nil)
+      end
     end
   end
 

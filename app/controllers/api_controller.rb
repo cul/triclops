@@ -17,6 +17,6 @@ class ApiController < ActionController::API
     #
     # @param String|Array json response describing errors
     def errors(errors)
-      { errors: Array.wrap(errors).map { |e| { title: e } } }
+      { errors: Array.wrap(errors).map { |e| { message: e } } }
     end
 end

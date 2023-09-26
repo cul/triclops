@@ -6,7 +6,9 @@ RSpec.describe "update resource", type: :request do
 
   let(:valid_update_attributes) do
     {
-      featured_region: '20,40,10,10'
+      featured_region: '20,40,10,10',
+      # identifier: identifier,
+      # secondary_identifier: secondary_identifier
     }
   end
 

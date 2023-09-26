@@ -4,9 +4,8 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 # Parameter validation
 gem 'dry-schema', '~> 1.4'
 # Use imogen for generating images
-gem 'imogen', '~> 0.2.1'
+gem 'imogen', '~> 0.3.2'
 # gem 'imogen', path: '../imogen'
-# gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'libvips'
 
 # Explicitly including io-wait dependency to match default version of the gem that comes with Ruby 3.0.
 gem 'io-wait', '0.2.0'
@@ -15,7 +14,7 @@ gem 'jbuilder', '~> 2.7'
 # Use Puma as the app server
 gem 'puma', '~> 3.11'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 7.0.2'
+gem 'rails', '~> 7.0.8'
 # Rainbow for text coloring
 gem 'rainbow', '~> 3.0'
 # Use SCSS for stylesheets
@@ -39,8 +38,8 @@ gem 'bootsnap', '>= 1.4.2', require: false
 
 group :development, :test do
   # rubocop + CUL presets
-  # gem 'rubocul', '~> 4.0.4'
-  gem 'rubocul', path: '../rubocul'
+  gem 'rubocul', '~> 4.0.6'
+  # gem 'rubocul', path: '../rubocul'
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
   # for json structure comparison in tests
@@ -55,7 +54,7 @@ group :development, :test do
 end
 
 group :development do
-  gem 'capistrano', '~> 3.17.0', require: false
+  gem 'capistrano', '~> 3.17.3', require: false
   gem 'capistrano-cul', require: false
   gem 'capistrano-passenger', '~> 0.1', require: false
   gem 'capistrano-rails', '~> 1.4', require: false

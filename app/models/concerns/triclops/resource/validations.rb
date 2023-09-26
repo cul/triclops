@@ -31,7 +31,7 @@ module Triclops
 
         identifier_exists =
           ::Resource.where
-                    .not(self.new_record? ? {} : { id: 1 })
+                    .not(self.new_record? ? {} : { id: self.id })
                     .and(
                       ::Resource.where(identifier: self.identifier)
                                 .or(::Resource.where(secondary_identifier: self.identifier))
@@ -40,7 +40,7 @@ module Triclops
 
         secondary_identifier_exists =
           ::Resource.where
-                    .not(self.new_record? ? {} : { id: 1 })
+                    .not(self.new_record? ? {} : { id: self.id })
                     .and(
                       ::Resource.where(identifier: self.secondary_identifier)
                                 .or(::Resource.where(secondary_identifier: self.secondary_identifier))
