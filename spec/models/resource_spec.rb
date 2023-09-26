@@ -2,7 +2,6 @@ require 'rails_helper'
 
 RSpec.describe Resource, type: :model do
   let(:identifier) { 'test' }
-  let(:secondary_identifier) { 'test-alternate-id' }
   let(:rails_root_relative_path) { File.join('spec', 'fixtures', 'files', 'sample.jpg') }
   let(:source_file_path) { Rails.root.join(rails_root_relative_path).to_s }
   let(:location_uri) { 'railsroot://' + rails_root_relative_path }
@@ -12,7 +11,6 @@ RSpec.describe Resource, type: :model do
   let(:instance) do
     described_class.new({
       identifier: identifier,
-      secondary_identifier: secondary_identifier,
       location_uri: location_uri,
       width: width,
       height: height,

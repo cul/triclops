@@ -5,7 +5,6 @@ FactoryBot.define do
     end
 
     identifier { "test-resource-#{identifier_counter}" }
-    secondary_identifier { "test-resource-alt-id-#{identifier_counter}" }
     location_uri { "railsroot://#{File.join('spec', 'fixtures', 'files', 'sample.jpg')}" }
     width { 1920 }
     height { 3125 }

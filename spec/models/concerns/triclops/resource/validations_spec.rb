@@ -29,26 +29,6 @@ RSpec.describe Resource, type: :model do
       end
     end
 
-    context 'secondary_identifier' do
-      it 'when present, must have a minimum length of one character' do
-        instance.secondary_identifier = nil
-        expect(instance.save).to eq(true)
-        instance.secondary_identifier = ''
-        instance.save
-        expect(instance.errors.attribute_names).to eq([:secondary_identifier])
-        instance.secondary_identifier = 'a'
-        expect(instance.save).to eq(true)
-      end
-
-      it 'is restricted to a max length' do
-        instance.secondary_identifier = 'a' * 255
-        expect(instance.save).to eq(true)
-        instance.secondary_identifier = 'a' * 256
-        instance.save
-        expect(instance.errors.attribute_names).to eq([:secondary_identifier])
-      end
-    end
-
     context 'location_uri' do
       it 'must be present' do
         instance.location_uri = nil
@@ -102,38 +82,6 @@ RSpec.describe Resource, type: :model do
           expect(instance).not_to be_valid
           expect(instance.errors.attribute_names).to include(:width, :height)
         end
-      end
-    end
-
-    context 'uniqueness of identifiers' do
-      it 'fails to save when the identifier is equal to the secondary_identifier' do
-        instance.secondary_identifier = instance.identifier
-        instance.save
-        expect(instance.errors.attribute_names).to eq([:identifier])
-      end
-
-      it 'fails to save if an identifier is already taken' do
-        FactoryBot.create(:resource, identifier: instance.identifier)
-        instance.save
-        expect(instance.errors.attribute_names).to eq([:identifier])
-      end
-
-      it 'fails to save if a secondary identifier is already taken' do
-        FactoryBot.create(:resource, secondary_identifier: instance.secondary_identifier)
-        instance.save
-        expect(instance.errors.attribute_names).to eq([:secondary_identifier])
-      end
-
-      it 'fails to save if new identifier conflicts with an existing secondary identifier' do
-        FactoryBot.create(:resource, secondary_identifier: instance.identifier)
-        instance.save
-        expect(instance.errors.attribute_names).to eq([:identifier])
-      end
-
-      it 'fails to save if new secondary identifier conflicts with an existing identifier' do
-        FactoryBot.create(:resource, identifier: instance.secondary_identifier)
-        instance.save
-        expect(instance.errors.attribute_names).to eq([:secondary_identifier])
       end
     end
 

@@ -11,7 +11,7 @@ module Api
           render json: @resource
         else
           render json: {
-            errors: ["Could not find resource with identifier/secondary_identifier: #{identifier}"]
+            errors: ["Could not find resource with identifier: #{identifier}"]
           }, status: :not_found
         end
       end
@@ -42,11 +42,11 @@ module Api
       private
 
         def set_resource
-          @resource = Resource.find_by_identifier_or_secondary_identifier(params[:id])
+          @resource = Resource.find_by(identifier: params[:id])
         end
 
         def create_or_update_params
-          params.require(:resource).permit(:identifier, :secondary_identifier, :location_uri, :featured_region)
+          params.require(:resource).permit(:identifier, :location_uri, :featured_region)
         end
     end
   end

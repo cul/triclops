@@ -4,7 +4,6 @@ RSpec.describe "create resource", type: :request do
   let(:valid_create_attributes) do
     {
       identifier: 'create-test',
-      secondary_identifier: 'create-test-alt-id',
       location_uri: 'railsroot://spec/fixtures/files/sample.jpg',
       featured_region: '320,616,1280,1280'
     }
