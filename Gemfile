@@ -1,29 +1,36 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-# Parameter validation
-gem 'dry-schema', '~> 1.4'
+# Use best_type for media type detection
+gem 'best_type', '~> 0.0.10'
+# For schema validation
+gem 'dry-validation', '~> 1.10.0'
 # Use imogen for generating images
-gem 'imogen', '~> 0.3.2'
-# gem 'imogen', path: '../imogen'
-
+# gem 'imogen', '~> 0.3.2'
+gem 'imogen', path: '../imogen'
 # Explicitly including io-wait dependency to match default version of the gem that comes with Ruby 3.0.
 gem 'io-wait', '0.2.0'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.7'
+# Use mysql as a database option for Active Record
+gem 'mysql2', '~> 0.5.5'
 # Use Puma as the app server
 gem 'puma', '~> 3.11'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 7.0.8'
 # Rainbow for text coloring
 gem 'rainbow', '~> 3.0'
+# Use Redis adapter to run Action Cable in production
+gem 'redis', '~> 4.8' # NOTE: Updating the redis gem to v5 breaks the current redis namespace setup
+gem 'redis-namespace', '~> 1.11'
+# Redlock for redis-based locks
+gem 'redlock', '~> 1.0'
+# Resque for queued jobs
+gem 'resque', '~> 2.6'
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 5'
 # Use sqlite3 as the database for Active Record
 gem 'sqlite3', '~> 1.4'
-# Redis key-value store
-gem 'redis', '~> 4.1'
-gem 'redlock', '~> 1.0'
 gem 'vite_rails'
 
 # Use Active Model has_secure_password

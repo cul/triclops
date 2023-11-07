@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Triclops - IIIF Viewer</title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag 'application', media: 'all' %>
+    <script src="/openseadragon/openseadragon.min.js"></script>
+  </head>
+
+  <body style="margin:0;padding:0;">
+    <%= yield %>
+  </body>
+</html>

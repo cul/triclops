@@ -10,7 +10,7 @@ module Triclops
         [
           :identifier,
           :featured_region,
-          :location_uri,
+          :source_uri,
           :width,
           :height,
           :created_at,

@@ -8,7 +8,7 @@ RSpec.describe "images#raster", type: :request do
     let(:invalid_raster_url) { "/iiif/2/#{invalid_identifier}/featured/512,/0/default.jpg" }
 
     before {
-      FactoryBot.create(:resource, identifier: valid_identifier)
+      FactoryBot.create(:resource, identifier: valid_identifier, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
     }
 
     context "successful response" do
@@ -24,9 +24,9 @@ RSpec.describe "images#raster", type: :request do
         config[:raster_cache][:enabled] = false
         config
       end
-      it "returns a successful response for a valid info url when caching is enabled, and adds the identifier to the ResourceAccessCache" do
+      it "returns a successful response for a valid info url when caching is enabled, and adds the identifier to the ResourceAccessStatCache" do
         stub_const('TRICLOPS', cache_enabled_triclops_config)
-        expect(Triclops::ResourceAccessCache.instance).to receive(:add).with(valid_identifier)
+        expect(Triclops::ResourceAccessStatCache.instance).to receive(:add).with(valid_identifier)
         get valid_raster_url
         expect(response).to have_http_status(:success)
       end

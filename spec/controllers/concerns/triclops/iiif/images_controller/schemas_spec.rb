@@ -28,8 +28,8 @@ RSpec.describe Triclops::Iiif::ImagesController::Schemas do
 
     let(:schema) {
       instance.raster_params_schema(
-        Iiif::ImagesController::ALLOWED_REGIONS,
-        Iiif::ImagesController::ALLOWED_SIZES,
+        Iiif::ImagesController::ALLOWED_REGIONS_REGEX,
+        Iiif::ImagesController::ALLOWED_SIZES_REGEX,
         Iiif::ImagesController::ALLOWED_ROTATIONS,
         Iiif::ImagesController::ALLOWED_QUALITIES
       )

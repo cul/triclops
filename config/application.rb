@@ -18,5 +18,9 @@ module Triclops
     config.active_record.default_timezone = :utc
 
     config.eager_load_paths << Rails.root.join('lib')
+
+    config.active_job.queue_adapter = :resque
+    config.active_job.queue_name_prefix = "triclops.#{Rails.env}"
+    config.active_job.queue_name_delimiter = '.'
   end
 end

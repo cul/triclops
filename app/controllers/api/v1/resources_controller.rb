@@ -19,13 +19,19 @@ module Api
       # PATCH/PUT /resources/:id
       # PATCH/PUT /resources/:id.json
       def create_or_update
+        success_status = :ok
+
         if @resource.nil?
-          @resource = Resource.create(create_or_update_params)
-          render json: { resource: @resource }, status: :created
-        elsif @resource.update(create_or_update_params)
-          render json: { resource: @resource }, status: :ok
+          @resource = Resource.create(create_or_update_params.merge(identifier: params[:id]))
+          success_status = :created
         else
+          @resource.update(create_or_update_params)
+        end
+
+        if @resource.errors.present?
           render json: errors(@resource.errors.full_messages), status: :bad_request
+        else
+          render json: { resource: @resource }, status: success_status
         end
       end
 
@@ -46,7 +52,7 @@ module Api
         end
 
         def create_or_update_params
-          params.require(:resource).permit(:identifier, :location_uri, :featured_region)
+          params.require(:resource).permit(:source_uri, :featured_region, :pcdm_type)
         end
     end
   end

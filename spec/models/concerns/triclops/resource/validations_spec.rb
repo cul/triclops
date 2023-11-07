@@ -29,14 +29,14 @@ RSpec.describe Resource, type: :model do
       end
     end
 
-    context 'location_uri' do
+    context 'source_uri' do
       it 'must be present' do
-        instance.location_uri = nil
+        instance.source_uri = nil
         instance.save
-        expect(instance.errors.attribute_names).to eq([:location_uri])
-        instance.location_uri = ''
+        expect(instance.errors.attribute_names).to eq([:source_uri])
+        instance.source_uri = ''
         instance.save
-        expect(instance.errors.attribute_names).to eq([:location_uri])
+        expect(instance.errors.attribute_names).to eq([:source_uri])
       end
     end
 
@@ -86,10 +86,10 @@ RSpec.describe Resource, type: :model do
     end
 
     context 'readable location uri' do
-      it 'fails to save when the location_uri is not a readable file' do
-        instance.location_uri = 'file:///does-not-exist'
+      it 'fails to save when the source_uri is not a readable file' do
+        instance.source_uri = 'file:///does-not-exist'
         instance.save
-        expect(instance.errors.attribute_names).to eq([:location_uri])
+        expect(instance.errors.attribute_names).to eq([:source_uri])
       end
     end
   end

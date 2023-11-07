@@ -3,7 +3,7 @@ Rails.application.routes.draw do
   root 'pages#home'
 
   namespace :api do
-    namespace :v1 do
+    namespace :v1, defaults: { format: :json } do
       resources :resources, only: [:show, :destroy]
       # Rather than using the built-in "update" controller action naming convention, we'll point
       # put/patch to a "create_or_update" controller action to clarify what these routes do.
@@ -15,10 +15,10 @@ Rails.application.routes.draw do
 
   namespace :iiif do
     scope ':version', version: /2/, defaults: { version: 2 } do
-      get '/:identifier/:region/:size/:rotation/:quality', to: 'images#raster', as: 'raster'
-      get '/:identifier/info.json', to: 'images#info', as: 'info'
       get '/test_viewer', to: redirect('/iiif/2/test_viewer/sample'), as: 'test_viewer_default'
       get '/test_viewer/:identifier', to: 'images#test_viewer', as: 'test_viewer'
+      get '/:identifier/:region/:size/:rotation/:quality', to: 'images#raster', as: 'raster'
+      get '/:identifier/info.json', to: 'images#info', as: 'info'
     end
   end
 end

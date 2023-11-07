@@ -5,7 +5,7 @@ FactoryBot.define do
     end
 
     identifier { "test-resource-#{identifier_counter}" }
-    location_uri { "railsroot://#{File.join('spec', 'fixtures', 'files', 'sample.jpg')}" }
+    source_uri { "railsroot://#{File.join('spec', 'fixtures', 'files', 'sample.jpg')}" }
     width { 1920 }
     height { 3125 }
     featured_region { '320,616,1280,1280' }

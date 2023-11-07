@@ -8,7 +8,7 @@ RSpec.describe 'images#info', type: :request do
     let(:invalid_info_url) { "/iiif/2/#{invalid_identifier}/info.json" }
 
     before {
-      FactoryBot.create(:resource, identifier: valid_identifier)
+      FactoryBot.create(:resource, identifier: valid_identifier, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
     }
 
     it "returns a successful response for a valid info url, with CORS header" do

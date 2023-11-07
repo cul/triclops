@@ -4,14 +4,14 @@ RSpec.describe Resource, type: :model do
   let(:identifier) { 'test' }
   let(:rails_root_relative_path) { File.join('spec', 'fixtures', 'files', 'sample.jpg') }
   let(:source_file_path) { Rails.root.join(rails_root_relative_path).to_s }
-  let(:location_uri) { 'railsroot://' + rails_root_relative_path }
+  let(:source_uri) { 'railsroot://' + rails_root_relative_path }
   let(:width) { 1920 }
   let(:height) { 3125 }
   let(:featured_region) { '320,616,1280,1280' }
   let(:instance) do
     described_class.new({
       identifier: identifier,
-      location_uri: location_uri,
+      source_uri: source_uri,
       width: width,
       height: height,
       featured_region: featured_region
@@ -42,17 +42,17 @@ RSpec.describe Resource, type: :model do
 
     it 'internally runs preprocessing operations on the raster_opts, converting "featured" region to specific crop region' do
       expect(instance).to receive(:yield_cached_raster).with(hash_including(region: /\d+,\d+,\d+,\d+/)).and_call_original
-      instance.raster(featured_raster_opts, true) { |_raster_file| }
+      instance.raster(featured_raster_opts, cache_enabled: true) { |_raster_file| }
     end
 
     it 'runs yield_cached_raster when cache_enabled arg is true' do
       expect(instance).to receive(:yield_cached_raster).with(raster_opts)
-      instance.raster(raster_opts, true) { |_raster_file| }
+      instance.raster(raster_opts, cache_enabled: true) { |_raster_file| }
     end
 
     it 'runs yield_uncached_raster when cache_enabled arg is false' do
       expect(instance).to receive(:yield_uncached_raster).with(raster_opts)
-      instance.raster(raster_opts, false) { |_raster_file| }
+      instance.raster(raster_opts, cache_enabled: false) { |_raster_file| }
     end
   end
 
@@ -172,7 +172,7 @@ RSpec.describe Resource, type: :model do
   context '#with_source_image_file' do
     context "with a railsroot:// path" do
       it "returns the path to an existing file" do
-        allow(instance).to receive(:location_uri).and_return('railsroot://spec/fixtures/files/sample-with-transparency.png')
+        allow(instance).to receive(:source_uri).and_return('railsroot://spec/fixtures/files/sample-with-transparency.png')
 
         instance.with_source_image_file do |file|
           expect(Rails.root.join('spec', 'fixtures', 'files', 'sample-with-transparency.png').to_s).to eq(file.path)
@@ -180,14 +180,14 @@ RSpec.describe Resource, type: :model do
       end
 
       it "raises an error for a file that doesn't exist" do
-        allow(instance).to receive(:location_uri).and_return('railsroot://nofile.png')
+        allow(instance).to receive(:source_uri).and_return('railsroot://nofile.png')
         expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
       end
     end
 
     context "with a placeholder:// path" do
       it "returns the path to an existing file" do
-        allow(instance).to receive(:location_uri).and_return('placeholder://sound')
+        allow(instance).to receive(:source_uri).and_return('placeholder://sound')
 
         instance.with_source_image_file do |file|
           expect(Rails.root.join('app', 'assets', 'images', 'placeholders', 'sound.png').to_s).to eq(file.path)
@@ -195,7 +195,7 @@ RSpec.describe Resource, type: :model do
       end
 
       it "raises an error for a file that doesn't exist" do
-        allow(instance).to receive(:location_uri).and_return('placeholder://nofile')
+        allow(instance).to receive(:source_uri).and_return('placeholder://nofile')
         expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
       end
     end
@@ -204,7 +204,7 @@ RSpec.describe Resource, type: :model do
       it "returns the path to an existing file" do
         temp_file_path = Dir.tmpdir + '/triclops-test-file.png'
         FileUtils.touch(temp_file_path)
-        allow(instance).to receive(:location_uri).and_return('file://' + temp_file_path)
+        allow(instance).to receive(:source_uri).and_return('file://' + temp_file_path)
 
         instance.with_source_image_file do |file|
           expect(temp_file_path).to eq(file.path)
@@ -214,13 +214,13 @@ RSpec.describe Resource, type: :model do
       end
 
       it "raises an error for a file that doesn't exist" do
-        allow(instance).to receive(:location_uri).and_return('file:///no/file/here.png')
+        allow(instance).to receive(:source_uri).and_return('file:///no/file/here.png')
         expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
       end
     end
 
     it "raises an error for an unsupported protocol" do
-      allow(instance).to receive(:location_uri).and_return('abc://what/does/this/protocol/even/mean.png')
+      allow(instance).to receive(:source_uri).and_return('abc://what/does/this/protocol/even/mean.png')
       expect { instance.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
     end
   end
@@ -248,31 +248,31 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#cache_path' do
-    it 'works as expected for a non-placeholder location_uri' do
-      expect(instance.cache_path(raster_opts)).to eq(
+  context '#iiif_cache_path' do
+    it 'works as expected for a non-placeholder source_uri' do
+      expect(instance.iiif_cache_path(raster_opts)).to eq(
         "#{TRICLOPS[:raster_cache][:directory]}/9f/86/d0/81/"\
-        '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08/full/full/0/color.png'
+        '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08/iiif/full/full/0/color.png'
       )
     end
 
-    it 'works as expected for a placeholder location_uri' do
-      instance.location_uri = 'placeholder://cool'
-      expect(instance.cache_path(raster_opts)).to eq(
+    it 'works as expected for a placeholder source_uri' do
+      instance.source_uri = 'placeholder://cool'
+      expect(instance.iiif_cache_path(raster_opts)).to eq(
         "#{TRICLOPS[:raster_cache][:directory]}/63/0f/dc/84/"\
-        '630fdc84e37d2c114ca6afdccb24fdc534bdd5f363745fe26833607fb067a080/full/full/0/color.png'
+        '630fdc84e37d2c114ca6afdccb24fdc534bdd5f363745fe26833607fb067a080/iiif/full/full/0/color.png'
       )
     end
   end
 
-  context '#location_uri_is_placeholder?' do
+  context '#source_uri_is_placeholder?' do
     it 'returns false when location uri does not start with placeholder://' do
-      expect(instance.location_uri_is_placeholder?).to eq(false)
+      expect(instance.source_uri_is_placeholder?).to eq(false)
     end
 
     it 'returns true when location uri starts with placeholder://' do
-      instance.location_uri = 'placeholder://cool'
-      expect(instance.location_uri_is_placeholder?).to eq(true)
+      instance.source_uri = 'placeholder://cool'
+      expect(instance.source_uri_is_placeholder?).to eq(true)
     end
   end
 
@@ -283,12 +283,12 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context 'when two different resources have the same location_uri value' do
+  context 'when two different resources have the same source_uri value' do
     let(:resource1) do
-      FactoryBot.create(:resource, location_uri: location_uri)
+      FactoryBot.create(:resource, source_uri: source_uri, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
     end
     let(:resource2) do
-      FactoryBot.create(:resource, location_uri: location_uri)
+      FactoryBot.create(:resource, source_uri: source_uri, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
     end
     let(:raster_opts_base) do
       {
@@ -300,23 +300,23 @@ RSpec.describe Resource, type: :model do
       }
     end
 
-    context 'when both resources have the same NON-"placeholder://"-prefixed location_uri value' do
+    context 'when both resources have the same NON-"placeholder://"-prefixed source_uri value' do
       it 'results in two different raster cache paths for each resource' do
         resource1_raster_path = nil
         resource2_raster_path = nil
-        resource1.raster(raster_opts, true) { |raster_file| resource1_raster_path = raster_file.path }
-        resource2.raster(raster_opts, true) { |raster_file| resource2_raster_path = raster_file.path }
+        resource1.raster(raster_opts, cache_enabled: true) { |raster_file| resource1_raster_path = raster_file.path }
+        resource2.raster(raster_opts, cache_enabled: true) { |raster_file| resource2_raster_path = raster_file.path }
         expect(resource1_raster_path).not_to eq(resource2_raster_path)
       end
     end
 
-    context 'when both resources have the SAME "placeholder://"-prefixed location_uri value' do
-      let(:location_uri) { 'placeholder://sound' }
+    context 'when both resources have the SAME "placeholder://"-prefixed source_uri value' do
+      let(:source_uri) { 'placeholder://sound' }
       it 'uses the same raster cache path for each resource' do
         resource1_raster_path = nil
         resource2_raster_path = nil
-        resource1.raster(raster_opts, true) { |raster_file| resource1_raster_path = raster_file.path }
-        resource2.raster(raster_opts, true) { |raster_file| resource2_raster_path = raster_file.path }
+        resource1.raster(raster_opts, cache_enabled: true) { |raster_file| resource1_raster_path = raster_file.path }
+        resource2.raster(raster_opts, cache_enabled: true) { |raster_file| resource2_raster_path = raster_file.path }
         expect(resource1_raster_path).to eq(resource2_raster_path)
       end
     end

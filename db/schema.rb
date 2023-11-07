@@ -13,16 +13,18 @@
 ActiveRecord::Schema[7.0].define(version: 2019_09_25_230507) do
   create_table "resources", force: :cascade do |t|
     t.string "identifier"
-    t.string "secondary_identifier"
+    t.text "source_uri"
+    t.integer "status", default: 0, null: false
+    t.text "error_message"
     t.string "featured_region"
-    t.text "location_uri"
+    t.string "pcdm_type"
     t.integer "width"
     t.integer "height"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.datetime "accessed_at", precision: nil
+    t.datetime "accessed_at"
     t.index ["identifier"], name: "index_resources_on_identifier", unique: true
-    t.index ["secondary_identifier"], name: "index_resources_on_secondary_identifier", unique: true
+    t.index ["status"], name: "index_resources_on_status"
   end
 
 end

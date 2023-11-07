@@ -4,7 +4,7 @@ RSpec.describe "create resource", type: :request do
   let(:valid_create_attributes) do
     {
       identifier: 'create-test',
-      location_uri: 'railsroot://spec/fixtures/files/sample.jpg',
+      source_uri: 'railsroot://spec/fixtures/files/sample.jpg',
       featured_region: '320,616,1280,1280'
     }
   end
@@ -12,7 +12,7 @@ RSpec.describe "create resource", type: :request do
   let(:invalid_create_attributes) {
     {
       identifier: 12_345,
-      location_uri: true,
+      source_uri: true,
       width: 'string',
       height: 'another string',
       featured_region: 42

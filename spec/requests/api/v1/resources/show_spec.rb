@@ -10,7 +10,7 @@ RSpec.describe "show resource", type: :request do
     end
 
     it "returns a success response for an existing resource" do
-      FactoryBot.create(:resource, identifier: identifier)
+      FactoryBot.create(:resource, identifier: identifier, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
       get "/api/v1/resources/#{identifier}.json"
       expect(response).to have_http_status(:success)
     end

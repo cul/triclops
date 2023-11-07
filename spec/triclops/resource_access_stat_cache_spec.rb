@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Triclops::ResourceAccessCache do
+RSpec.describe Triclops::ResourceAccessStatCache do
   let(:cache_list_key) { "#{Rails.application.class.module_parent_name}:#{Rails.env}:raster_access_entries".freeze }
   let(:instance) do
     described_class.new(
@@ -14,19 +14,19 @@ RSpec.describe Triclops::ResourceAccessCache do
     )
   end
 
-  context ".instance" do
-    it "creates and returns a singleton of the correct type" do
+  describe '.instance' do
+    it 'creates and returns a singleton of the correct type' do
       expect(described_class.instance).to be_a(described_class)
     end
 
-    it "returns the same object instance when called multiple times" do
+    it 'returns the same object instance when called multiple times' do
       obj1 = described_class.instance
       obj2 = described_class.instance
       expect(obj1).to equal(obj2)
     end
   end
 
-  context '#initialize' do
+  describe '#initialize' do
     it 'successfully creates a new instance and sets up appropriate instance variables' do
       expect(instance).to be_a(described_class)
       expect(instance.instance_variable_get('@redis')).to be_a(Redis)
@@ -34,7 +34,7 @@ RSpec.describe Triclops::ResourceAccessCache do
     end
   end
 
-  context '#add', redis: true do
+  describe '#add', redis: true do
     before {
       instance.clear
     }
@@ -47,7 +47,7 @@ RSpec.describe Triclops::ResourceAccessCache do
     end
   end
 
-  context '#all', redis: true do
+  describe '#all', redis: true do
     before {
       instance.clear
     }
@@ -61,7 +61,7 @@ RSpec.describe Triclops::ResourceAccessCache do
     end
   end
 
-  context '#clear', redis: true do
+  describe '#clear', redis: true do
     before {
       instance.clear
     }

@@ -1,8 +1,8 @@
 module Triclops
   # A class that keeps track of recently accessed resource ids so that they can
   # be retrieved in batch and persisted long-term to the Resource persistence layer.
-  class ResourceAccessCache
-    # Singleton pattern Triclops::ResourceAccessCache instance for this class.
+  class ResourceAccessStatCache
+    # Singleton pattern Triclops::ResourceAccessStatCache instance for this class.
     def self.instance
       @instance ||= new(
         Redis.new(
@@ -15,7 +15,7 @@ module Triclops
       )
     end
 
-    # Initialize a new Triclops::ResourceAccessCache object.
+    # Initialize a new Triclops::ResourceAccessStatCache object.
     # @param redis [Redis] A Redis connection instance.
     # @param cache_list_key [String] A key to use for the cache list entry.
     def initialize(redis, cache_list_key)
@@ -27,7 +27,7 @@ module Triclops
     # with the same identifier will only result in the identifier being added once.
     # @param identifier [String] An identifier
     def add(identifier)
-      @redis.sadd(@cache_list_key, identifier)
+      @redis.sadd?(@cache_list_key, identifier)
     end
 
     # Returns all cached identifiers (with no guarantees about order).

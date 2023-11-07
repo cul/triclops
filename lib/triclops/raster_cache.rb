@@ -9,16 +9,56 @@ module Triclops
       @cache_directory = cache_directory
     end
 
+    def full_base_cache_path(identifier, mkdir_p: false)
+      File.join(
+        base_cache_directory_for_identifier(identifier, mkdir_p: mkdir_p),
+        "full.#{Triclops::Iiif::Constants::BASE_IMAGE_FORMAT}"
+      )
+    end
+
+    def reduced_base_cache_path(identifier, mkdir_p: false)
+      File.join(
+        base_cache_directory_for_identifier(identifier, mkdir_p: mkdir_p),
+        "reduced.#{Triclops::Iiif::Constants::BASE_IMAGE_FORMAT}"
+      )
+    end
+
+    def square_base_cache_path(identifier, mkdir_p: false)
+      File.join(
+        base_cache_directory_for_identifier(identifier, mkdir_p: mkdir_p),
+        "square.#{Triclops::Iiif::Constants::BASE_IMAGE_FORMAT}"
+      )
+    end
+
     # Returns the full cache path to a raster file.
     # @param raster_opts {Hash} Raster options for the desired raster.
-    def cache_path(identifier, raster_opts)
-      File.join(
-        cache_directory_for_identifier(identifier),
+    def iiif_cache_path(identifier, raster_opts, mkdir_p: false)
+      dir = File.join(
+        iiif_cache_directory_for_identifier(identifier),
         raster_opts[:region],
         raster_opts[:size],
-        raster_opts[:rotation].to_s,
-        "#{raster_opts[:quality]}.#{raster_opts[:format]}"
+        raster_opts[:rotation].to_s
       )
+      FileUtils.mkdir_p(dir) if mkdir_p
+      File.join(dir, "#{raster_opts[:quality]}.#{raster_opts[:format]}")
+    end
+
+    def base_cache_directory_for_identifier(identifier, mkdir_p: false)
+      dir = File.join(
+        cache_directory_for_identifier(identifier),
+        'base'
+      )
+      FileUtils.mkdir_p(dir) if mkdir_p
+      dir
+    end
+
+    def iiif_cache_directory_for_identifier(identifier, mkdir_p: false)
+      dir = File.join(
+        cache_directory_for_identifier(identifier),
+        'iiif'
+      )
+      FileUtils.mkdir_p(dir) if mkdir_p
+      dir
     end
 
     def cache_directory_for_identifier(identifier)

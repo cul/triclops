@@ -1,11 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe "update resource", type: :request do
-  let(:identifier) { 'update-test' }
-
   let(:valid_update_attributes) do
     {
-      featured_region: '20,40,10,10',
+      featured_region: '20,40,10,10'
     }
   end
 
@@ -15,7 +13,8 @@ RSpec.describe "update resource", type: :request do
     }
   end
 
-  let!(:resource) { FactoryBot.create(:resource, identifier: identifier) }
+  let(:resource) { FactoryBot.create(:resource, identifier: 'update-test', pcdm_type: BestType::PcdmTypeLookup::IMAGE) }
+  let(:identifier) { resource.identifier }
 
   describe "PATCH /resources/:id" do
     let(:identifier_patch_url) { "/api/v1/resources/#{identifier}.json" }

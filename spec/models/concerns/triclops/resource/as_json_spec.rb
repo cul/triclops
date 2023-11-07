@@ -2,14 +2,14 @@ require 'rails_helper'
 
 RSpec.describe Resource, type: :model do
   let(:identifier) { 'test' }
-  let(:location_uri) { 'railsroot://spec/fixtures/files/sample.jpg' }
+  let(:source_uri) { 'railsroot://spec/fixtures/files/sample.jpg' }
   let(:width) { 1920 }
   let(:height) { 3125 }
   let(:featured_region) { '320,616,1280,1280' }
   let(:instance) do
     inst = described_class.new({
       identifier: identifier,
-      location_uri: location_uri,
+      source_uri: source_uri,
       width: width,
       height: height,
       featured_region: featured_region
@@ -27,7 +27,7 @@ RSpec.describe Resource, type: :model do
         {
           identifier: identifier,
           featured_region: featured_region,
-          location_uri: location_uri,
+          source_uri: source_uri,
           width: width,
           height: height,
           created_at: created_at,
