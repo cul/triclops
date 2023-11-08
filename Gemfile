@@ -7,7 +7,8 @@ gem 'best_type', '~> 0.0.10'
 gem 'dry-validation', '~> 1.10.0'
 # Use imogen for generating images
 # gem 'imogen', '~> 0.3.2'
-gem 'imogen', path: '../imogen'
+# gem 'imogen', path: '../imogen'
+gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'iiif_tile_generation_fixes'
 # Explicitly including io-wait dependency to match default version of the gem that comes with Ruby 3.0.
 gem 'io-wait', '0.2.0'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder

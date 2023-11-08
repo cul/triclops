@@ -1,5 +1,7 @@
-PATH
-  remote: ../imogen
+GIT
+  remote: https://github.com/cul/imogen.git
+  revision: 0a3b304e745a98a948d3bb41c24174d3b68bc128
+  branch: iiif_tile_generation_fixes
   specs:
     imogen (0.3.2)
       ruby-vips
