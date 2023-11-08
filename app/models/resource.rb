@@ -143,91 +143,40 @@ class Resource < ApplicationRecord
 
     # Generate IIIF zooming image viewer tiles
 
-    width = self.width
-    height = self.height
-    tile_width = Triclops::Iiif::Constants::TILE_SIZE
-    tile_height = Triclops::Iiif::Constants::TILE_SIZE
-
-    generated_image_count = 0
-    Imogen.with_image(full_base_path) do |img|
-      self.scale_factors_for_tile_size(Triclops::Iiif::Constants::TILE_SIZE).each do |scale_factor|
-        # NOTE: Algorithm below is from https://iiif.io/api/image/2.1/#a-implementation-notes
-        scale_factor_as_float = scale_factor.to_f
-
-        # rubocop:disable Style/IfUnlessModifier
-        col = 0
-        x = 0
-        while x < width
-          row = 0
-          y = 0
-          while y < height
-            # Calculate region parameters /xr,yr,wr,hr/
-            xr = col * tile_width * scale_factor_as_float
-            yr = row * tile_height * scale_factor_as_float
-            wr = tile_width * scale_factor_as_float
-            if xr + wr > width
-              wr = width - xr
-            end
-            hr = tile_height * scale_factor_as_float
-            if yr + hr > height
-              hr = height - yr
-            end
-            # Calculate size parameters /ws,hs/
-            ws = tile_width
-            if xr + tile_width * scale_factor_as_float > width
-              ws = (width - xr + scale_factor_as_float - 1) / scale_factor_as_float  # +scale_factor_as_floatZ-1 in numerator to round up
-            end
-
-            ## Commenting out this section because we don't need the height for our generated size, since it's width-based.
-            # hs = tile_height
-            # if yr + tile_height * scale_factor_as_float > height
-            #   hs = (height - yr + scale_factor_as_float - 1) / scale_factor_as_float
-            # end
-
-            # If the region width or height go negative, we've gone too far. Break!
-            break if wr.negative? || hr.negative?
-
-            region = "#{xr.floor},#{yr.floor},#{wr.floor},#{hr.floor}"
-            size = "#{ws.floor}," # OpenSeadragon seems to like only specifying width, and omitting height
-
-            # Need to do this correction for OpenSeadragon Compatibility, since it asks for "full" in this case.
-            region = 'full' if region == "0,0,#{width},#{height}"
-
-            raster_opts = {
-              region: region,
-              size: size,
-              rotation: 0,
-              quality: Triclops::Iiif::Constants::BASE_QUALITY,
-              format: Triclops::Iiif::Constants::DEFAULT_FORMAT
-            }
-
-            Rails.logger.debug "Generate tile: #{raster_opts}"
-            tile_path = iiif_cache_path(raster_opts)
-            FileUtils.mkdir_p(File.dirname(tile_path))
-            Imogen::Iiif.convert(img, tile_path, Triclops::Iiif::Constants::DEFAULT_FORMAT, raster_opts)
-            generated_image_count += 1
-
-            row += 1
-            y += tile_height
-          end
-          col += 1
-          x += tile_width
-        end
-        # rubocop:enable Style/IfUnlessModifier
+    Imogen.with_image(full_base_path) do |image|
+      Imogen::Iiif::Tiles.for(
+        image,
+        Triclops::RasterCache.instance.iiif_cache_directory_for_identifier(self.identifier),
+        :jpg,
+        Triclops::Iiif::Constants::TILE_SIZE,
+        'color'
+      ) do |img, suggested_tile_dest_path, format, iiif_opts|
+        FileUtils.mkdir_p(File.dirname(suggested_tile_dest_path))
+        Imogen::Iiif.convert(img, suggested_tile_dest_path, format, iiif_opts)
       end
     end
+    # If the Imogen::Iiif::Tiles.generate_with_vips_dzsave method were fully implemented,
+    # we would call it like this:
+    # Imogen.with_image(full_base_path) do |image|
+    #   Imogen::Iiif::Tiles.generate_with_vips_dzsave(
+    #     image,
+    #     Triclops::RasterCache.instance.iiif_cache_directory_for_identifier(self.identifier),
+    #     format: :jpg,
+    #     tile_size: Triclops::Iiif::Constants::TILE_SIZE,
+    #     tile_filename_without_extension: 'color'
+    #   )
+    # end
 
-    Rails.logger.debug "Generated #{generated_image_count} images"
-
-    nil # Return nil so that we don't return the array above
+    true
   end
 
   # Returns an array of scale factors (e.g. [1, 2, 4, 8, 16]), based on the image dimensions
   # and the given tile_size.
   def scale_factors_for_tile_size(tile_size)
-    largest_scale_factor = Imogen::Zoomable.max_levels_for(self.width, self.height, tile_size)
-    largest_scale_factor -= Math.log2(tile_size / 2) # remove scales smaller than tile size
-    (0..(largest_scale_factor.to_i)).map { |exp| 2.pow(exp) }
+    # largest_scale_factor = Imogen::Zoomable.max_levels_for(self.width, self.height, tile_size)
+    # largest_scale_factor -= Math.log2(tile_size / 2) # remove scales smaller than tile size
+    # (0..(largest_scale_factor.to_i)).map { |exp| 2.pow(exp) }
+    Imogen::Iiif::Tiles.scale_factors_for(self.width, self.height, tile_size)
   end
 
   def extract_width_and_height_if_missing_or_source_changed!

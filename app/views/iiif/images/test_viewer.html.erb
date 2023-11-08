@@ -1,13 +1,10 @@
 <!-- script src="/openseadragon/openseadragon.min.js"></script -->
 <div id="test_viewer" style="width: 100vw; height: 100vh; background-color: #fff;"></div>
 <script>
-  OpenSeadragon({
+  var viewer = OpenSeadragon({
     id: 'test_viewer',
     prefixUrl: '/openseadragon/images/',
-    visibilityRatio:    1,
-    minZoomLevel:       .25,
-    defaultZoomLevel:   .25,
-    maxZoomLevel:       2,
+    showRotationControl: true,
     tileSources: ['/iiif/2/<%= @resource.identifier %>/info.json']
   });
 </script>

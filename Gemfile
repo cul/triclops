@@ -15,7 +15,7 @@ gem 'jbuilder', '~> 2.7'
 # Use mysql as a database option for Active Record
 gem 'mysql2', '~> 0.5.5'
 # Use Puma as the app server
-gem 'puma', '~> 3.11'
+gem 'puma', '~> 5.2'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 7.0.8'
 # Rainbow for text coloring

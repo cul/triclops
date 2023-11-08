@@ -14,12 +14,12 @@ module Triclops
           'width': width,
           'height': height,
           'sizes': sizes.map { |size| { 'width': size[0], 'height': size[1] } },
-          'tiles': tile_info(width, height, tile_size, scale_factors),
+          'tiles': tile_info(tile_size, scale_factors),
           'profile': ['http://iiif.io/api/image/2/level2.json', { 'formats': formats, 'qualities': qualities }]
         }
       end
 
-      def tile_info(width, height, tile_size, scale_factors)
+      def tile_info(tile_size, scale_factors)
         [{
           'width': tile_size,
           # 'height': tile_size, # when height is omitted, IIIF interprets that as "height is the same as width"

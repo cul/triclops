@@ -80,7 +80,7 @@ class Iiif::ImagesController < ApplicationController
   end
 
   def test_viewer
-    render layout: 'iiif_viewer'
+    render layout: 'test_viewer'
   end
 
   private
