@@ -38,6 +38,17 @@ set :keep_releases, 3
 # Set default log level (which can be overridden by other environments)
 set :log_level, :info
 
+# NVM Setup, for selecting the correct node version
+# NOTE: This NVM configuration MUST be configured before the RVM setup steps because:
+# This works:
+# nvm exec 16 ~/.rvm-alma8/bin/rvm example_app_dev do node --version
+# But this does not work:
+# ~/.rvm-alma8/bin/rvm example_app_dev do nvm exec 16 node --version
+set :nvm_node_version, 'v16.16.0' # This version must alreadybe installed (via NVM) on the server
+[:rake, :node, :npm, :yarn].each do |command_to_prefix|
+  SSHKit.config.command_map.prefix[command_to_prefix].push("nvm exec #{fetch(:nvm_node_version)}")
+end
+
 # RVM Setup, for selecting the correct ruby version (instead of capistrano-rvm gem)
 set :rvm_ruby_version, fetch(:deploy_name)
 [:rake, :gem, :bundle, :ruby].each do |command_to_prefix|
@@ -45,13 +56,6 @@ set :rvm_ruby_version, fetch(:deploy_name)
     "#{fetch(:rvm_custom_path, '~/.rvm')}/bin/rvm #{fetch(:rvm_ruby_version)} do"
   )
 end
-
-# TODO: Eventually select specific node rather than relying on the default version.
-# # NVM Setup, for selecting the correct node version
-# set :nvm_node_version, 'v16.16.0'
-# [:rake, :node, :npm, :yarn].each do |command_to_prefix|
-#   SSHKit.config.command_map.prefix[command_to_prefix].push("nvm exec #{fetch(:nvm_node_version)}")
-# end
 
 # Default value for default_env is {}
 set :default_env, NODE_ENV: 'production'
