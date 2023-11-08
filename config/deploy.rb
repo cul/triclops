@@ -44,13 +44,13 @@ set :log_level, :info
 # nvm exec 16 ~/.rvm-alma8/bin/rvm example_app_dev do node --version
 # But this does not work:
 # ~/.rvm-alma8/bin/rvm example_app_dev do nvm exec 16 node --version
-set :nvm_node_version, 'v16.16.0' # This version must alreadybe installed (via NVM) on the server
+set :nvm_node_version, fetch(:deploy_name) # This NVM alias must exist on the server
 [:rake, :node, :npm, :yarn].each do |command_to_prefix|
   SSHKit.config.command_map.prefix[command_to_prefix].push("nvm exec #{fetch(:nvm_node_version)}")
 end
 
 # RVM Setup, for selecting the correct ruby version (instead of capistrano-rvm gem)
-set :rvm_ruby_version, fetch(:deploy_name)
+set :rvm_ruby_version, fetch(:deploy_name) # This RVM alias must exist on the server
 [:rake, :gem, :bundle, :ruby].each do |command_to_prefix|
   SSHKit.config.command_map.prefix[command_to_prefix].push(
     "#{fetch(:rvm_custom_path, '~/.rvm')}/bin/rvm #{fetch(:rvm_ruby_version)} do"
