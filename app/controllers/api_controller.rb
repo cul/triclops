@@ -1,4 +1,6 @@
 class ApiController < ActionController::API
+  include ActionController::HttpAuthentication::Token::ControllerMethods
+
   rescue_from ActiveRecord::RecordNotFound do
     render json: errors('Not Found'), status: :not_found
   end
@@ -11,6 +13,15 @@ class ApiController < ActionController::API
     def ensure_json_request
       return if request.format.blank? || request.format == :json
       head :not_acceptable
+    end
+
+    # Renders with an :unauthorized status if no request token is provided, or renders with a
+    # :forbidden status if the request uses an invalid request token. This method should be
+    # used as a before_action callback for any controller actions that require authorization.
+    def authenticate_request_token
+      authenticate_or_request_with_http_token do |token, _options|
+        ActiveSupport::SecurityUtils.secure_compare(TRICLOPS['remote_request_api_key'], token)
+      end
     end
 
     # Generates JSON with errors

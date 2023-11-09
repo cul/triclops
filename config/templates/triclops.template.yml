@@ -1,7 +1,8 @@
 development:
+  remote_request_api_key: 'changethis'
   run_queued_jobs_inline: true
   raster_cache:
-    on_miss: 'generate_and_do_not_cache' # ['generate_and_do_not_cache', 'generate_and_cache', 'error']
+    on_miss: 'error' # ['generate_and_do_not_cache', 'generate_and_cache', 'error']
     directory: <%= Rails.root.join('tmp', 'triclops_development_cache', 'raster') %>
   lock:
     lock_timeout: 10
@@ -10,9 +11,10 @@ development:
   tmp_directory: <%= Rails.root.join('tmp', 'triclops_development_tmp') %>
 
 test:
+  remote_request_api_key: 'changethis'
   run_queued_jobs_inline: true
   raster_cache:
-    on_miss: 'generate_and_do_not_cache' # ['generate_and_do_not_cache', 'generate_and_cache', 'error']
+    on_miss: 'error' # ['generate_and_do_not_cache', 'generate_and_cache', 'error']
     directory: <%= Rails.root.join('tmp', 'triclops_test_cache', 'raster') %>
   lock:
     lock_timeout: 10

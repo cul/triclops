@@ -1,6 +1,7 @@
 module Api
   module V1
     class ResourcesController < ApiController
+      before_action :authenticate_request_token
       before_action :ensure_json_request
       before_action :set_resource, only: [:show, :create_or_update, :destroy]
 
