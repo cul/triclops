@@ -8,7 +8,7 @@ RSpec.describe 'images#info', type: :request do
     let(:invalid_info_url) { "/iiif/2/#{invalid_identifier}/info.json" }
 
     before {
-      FactoryBot.create(:resource, identifier: valid_identifier, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
+      FactoryBot.create(:resource, :ready, identifier: valid_identifier, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
     }
 
     it "returns a successful response for a valid info url, with CORS header" do
@@ -17,9 +17,9 @@ RSpec.describe 'images#info', type: :request do
       expect(response.headers['Access-Control-Allow-Origin']).to eq('*')
     end
 
-    it "returns a 404 response for info url when resource does not exist" do
+    it "returns a 302 response for info url when resource does not exist" do
       get invalid_info_url
-      expect(response).to have_http_status(:not_found)
+      expect(response).to have_http_status(:found)
     end
   end
 end

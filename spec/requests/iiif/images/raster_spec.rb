@@ -42,9 +42,9 @@ RSpec.describe "images#raster", type: :request do
       end
     end
 
-    it "returns a 404 response for raster url when resource does not exist" do
+    it "returns a 302 response for raster url when a ready resource does not exist" do
       get invalid_raster_url
-      expect(response).to have_http_status(:not_found)
+      expect(response).to have_http_status(:found)
     end
 
     context "existing resource, but bad iiif url params" do
