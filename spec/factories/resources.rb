@@ -9,5 +9,9 @@ FactoryBot.define do
     width { 1920 }
     height { 3125 }
     featured_region { '320,616,1280,1280' }
+
+    trait :ready do
+      status { Resource.statuses[:ready] }
+    end
   end
 end

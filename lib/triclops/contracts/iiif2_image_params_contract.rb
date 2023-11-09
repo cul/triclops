@@ -10,7 +10,7 @@ module Triclops
         required(:size).value(:string, format?: Triclops::Iiif::Constants::ALLOWED_SIZES_REGEX)
         required(:rotation).value(:integer, included_in?: Triclops::Iiif::Constants::ALLOWED_ROTATIONS)
         required(:quality).value(:string, included_in?: Triclops::Iiif::Constants::ALLOWED_QUALITIES)
-        required(:format).value(:string)
+        required(:format).value(:string, included_in?: Triclops::Iiif::Constants::ALLOWED_FORMATS.keys)
         optional(:download).value(:bool)
       end
 

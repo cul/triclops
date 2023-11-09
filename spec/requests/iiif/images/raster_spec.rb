@@ -4,35 +4,39 @@ RSpec.describe "images#raster", type: :request do
   describe "/iiif/2/sample/region/size/rotation/quality.format" do
     let(:valid_identifier) { 'cool' }
     let(:invalid_identifier) { 'not-cool' }
-    let(:valid_raster_url) { "/iiif/2/#{valid_identifier}/featured/512,/0/default.jpg" }
-    let(:invalid_raster_url) { "/iiif/2/#{invalid_identifier}/featured/512,/0/default.jpg" }
+    let(:valid_raster_url) { "/iiif/2/#{valid_identifier}/full/512,/0/default.jpg" }
+    let(:invalid_raster_url) { "/iiif/2/#{invalid_identifier}/full/512,/0/default.jpg" }
 
     before {
-      FactoryBot.create(:resource, identifier: valid_identifier, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
+      FactoryBot.create(:resource, :ready, identifier: valid_identifier, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
     }
 
     context "successful response" do
-      let(:cache_enabled_triclops_config) do
+      let(:config_with_access_stats_enabled) do
         config = TRICLOPS.dup
         config[:raster_cache] = config[:raster_cache].dup
-        config[:raster_cache][:enabled] = true
+        config[:raster_cache][:access_stats_enabled] = true
         config
       end
-      let(:cache_disabled_triclops_config) do
+      let(:config_with_access_stats_disabled) do
         config = TRICLOPS.dup
         config[:raster_cache] = config[:raster_cache].dup
-        config[:raster_cache][:enabled] = false
+        config[:raster_cache][:access_stats_enabled] = false
         config
       end
-      it "returns a successful response for a valid info url when caching is enabled, and adds the identifier to the ResourceAccessStatCache" do
-        stub_const('TRICLOPS', cache_enabled_triclops_config)
+
+      before { allow_any_instance_of(Iiif::ImagesController).to receive(:handle_ready_resource) }
+
+      it "updates the access stat cache when access stats are enabled" do
+        stub_const('TRICLOPS', config_with_access_stats_enabled)
         expect(Triclops::ResourceAccessStatCache.instance).to receive(:add).with(valid_identifier)
         get valid_raster_url
         expect(response).to have_http_status(:success)
       end
 
-      it "returns a successful response for a valid info url when caching is disabled" do
-        stub_const('TRICLOPS', cache_disabled_triclops_config)
+      it "does not update the access stat cache when access stats are disabled" do
+        stub_const('TRICLOPS', config_with_access_stats_disabled)
+        expect(Triclops::ResourceAccessStatCache.instance).not_to receive(:add).with(valid_identifier)
         get valid_raster_url
         expect(response).to have_http_status(:success)
       end

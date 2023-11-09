@@ -48,29 +48,11 @@ class Iiif::ImagesController < ApplicationController
     # accessed cache items should be kept.
     # Note: We only need to cache access times if caching is enabled. Resource
     # access time doesn't matter if we're not caching anything.
-    Triclops::ResourceAccessStatCache.instance.add(@resource.identifier) if TRICLOPS[:raster_cache][:enabled]
+    Triclops::ResourceAccessStatCache.instance.add(@resource.identifier) if
+      TRICLOPS[:raster_cache][:access_stats_enabled]
 
     if @resource.ready?
-      # cache_enabled = cacheable_raster?(@resource, normalized_raster_opts)
-      cache_hit = @resource.raster_exists?(normalized_raster_opts)
-      unless cache_hit
-        Rails.logger.error(
-          "[#{@resource.identifier}] "\
-          "Cache MISS: (original_raster_opts: #{original_raster_opts}) "\
-          "(normalized_raster_opts: #{normalized_raster_opts.inspect})"
-        )
-      end
-      if cache_hit || TRICLOPS[:raster_cache][:on_miss] == 'generate_and_cache' || @resource.source_uri_is_placeholder?
-        @resource.yield_cached_raster(normalized_raster_opts) do |raster_file|
-          send_raster_file(raster_file, normalized_raster_opts, @resource.updated_at, delivery_method: :send_file)
-        end
-      elsif TRICLOPS[:raster_cache][:on_miss] == 'generate_and_do_not_cache'
-        @resource.yield_uncached_raster(normalized_raster_opts) do |raster_file|
-          send_raster_file(raster_file, normalized_raster_opts, @resource.updated_at, delivery_method: :send_data)
-        end
-      else # TRICLOPS[:raster_cache][:on_miss] == 'error'
-        render plain: 'not found', status: :not_found
-      end
+      handle_ready_resource(original_raster_opts, normalized_raster_opts)
     else
       Rails.logger.debug(
         "[#{@resource.identifier}] Redirecting raster request to placeholder image because resource is not ready"
@@ -85,9 +67,27 @@ class Iiif::ImagesController < ApplicationController
 
   private
 
-  # def raster_params
-  #   params.permit(:version, :identifier, :region, :size, :rotation, :quality, :format, :download)
-  # end
+  def handle_ready_resource(original_raster_opts, normalized_raster_opts)
+    cache_hit = @resource.raster_exists?(normalized_raster_opts)
+    unless cache_hit
+      Rails.logger.error(
+        "[#{@resource.identifier}] "\
+        "Cache MISS: (original_raster_opts: #{original_raster_opts}) "\
+        "(normalized_raster_opts: #{normalized_raster_opts.inspect})"
+      )
+    end
+    if cache_hit || TRICLOPS[:raster_cache][:on_miss] == 'generate_and_cache' || @resource.source_uri_is_placeholder?
+      @resource.yield_cached_raster(normalized_raster_opts) do |raster_file|
+        send_raster_file(raster_file, normalized_raster_opts, @resource.updated_at, delivery_method: :send_file)
+      end
+    elsif TRICLOPS[:raster_cache][:on_miss] == 'generate_and_do_not_cache'
+      @resource.yield_uncached_raster(normalized_raster_opts) do |raster_file|
+        send_raster_file(raster_file, normalized_raster_opts, @resource.updated_at, delivery_method: :send_data)
+      end
+    else # TRICLOPS[:raster_cache][:on_miss] == 'error'
+      render plain: 'not found', status: :not_found
+    end
+  end
 
   def error_response(errors)
     { result: false, errors: errors }

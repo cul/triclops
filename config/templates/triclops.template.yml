@@ -1,5 +1,6 @@
 development:
   remote_request_api_key: 'changethis'
+  access_stats_enabled: false
   run_queued_jobs_inline: true
   raster_cache:
     on_miss: 'error' # ['generate_and_do_not_cache', 'generate_and_cache', 'error']
@@ -12,6 +13,7 @@ development:
 
 test:
   remote_request_api_key: 'changethis'
+  access_stats_enabled: false
   run_queued_jobs_inline: true
   raster_cache:
     on_miss: 'error' # ['generate_and_do_not_cache', 'generate_and_cache', 'error']

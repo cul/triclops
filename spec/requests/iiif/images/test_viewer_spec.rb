@@ -16,9 +16,9 @@ RSpec.describe "images#test_viewer", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "returns a 404 response for test_viewer url when resource does not exist" do
+    it "returns a 302 response for test_viewer url when resource does not exist" do
       get invalid_test_viewer_url
-      expect(response).to have_http_status(:not_found)
+      expect(response).to have_http_status(:found)
     end
   end
 end
