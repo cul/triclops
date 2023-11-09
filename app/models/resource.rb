@@ -173,9 +173,6 @@ class Resource < ApplicationRecord
   # Returns an array of scale factors (e.g. [1, 2, 4, 8, 16]), based on the image dimensions
   # and the given tile_size.
   def scale_factors_for_tile_size(tile_size)
-    # largest_scale_factor = Imogen::Zoomable.max_levels_for(self.width, self.height, tile_size)
-    # largest_scale_factor -= Math.log2(tile_size / 2) # remove scales smaller than tile size
-    # (0..(largest_scale_factor.to_i)).map { |exp| 2.pow(exp) }
     Imogen::Iiif::Tiles.scale_factors_for(self.width, self.height, tile_size)
   end
 
