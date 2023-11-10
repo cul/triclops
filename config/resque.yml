@@ -5,14 +5,14 @@ default: &default
 
 development:
   <<: *default
-  # More frequent polling interval in development environment
-  polling_interval: 1
+  polling_interval: 3 # More frequent polling interval in development environment
 
 test:
   <<: *default
 
 production:
   <<: *default
+  polling_interval: 5
   workers:
     '*' : 1
     'high' : 3
