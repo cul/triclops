@@ -12,6 +12,14 @@ class Iiif::ImagesController < ApplicationController
       return
     end
 
+    compliance_level_url =
+      if TRICLOPS[:raster_cache][:on_miss] == 'error'
+        'http://iiif.io/api/image/2/level0.json'
+      else
+        'http://iiif.io/api/image/2/level1.json'
+      end
+    response.set_header('Link', compliance_level_url)
+
     render json: @resource.iiif_info(
       iiif_info_url(@resource.identifier)[0...-10], # chop off last 10 characters to remove "/info.json"
       @resource.width,

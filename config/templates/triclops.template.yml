@@ -1,7 +1,7 @@
 development:
+  run_queued_jobs_inline: true
   remote_request_api_key: 'changethis'
   access_stats_enabled: false
-  run_queued_jobs_inline: true
   raster_cache:
     on_miss: 'error' # ['generate_and_do_not_cache', 'generate_and_cache', 'error']
     directory: <%= Rails.root.join('tmp', 'triclops_development_cache', 'raster') %>
@@ -12,9 +12,9 @@ development:
   tmp_directory: <%= Rails.root.join('tmp', 'triclops_development_tmp') %>
 
 test:
+  run_queued_jobs_inline: true
   remote_request_api_key: 'changethis'
   access_stats_enabled: false
-  run_queued_jobs_inline: true
   raster_cache:
     on_miss: 'error' # ['generate_and_do_not_cache', 'generate_and_cache', 'error']
     directory: <%= Rails.root.join('tmp', 'triclops_test_cache', 'raster') %>
