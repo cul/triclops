@@ -2,9 +2,9 @@ require 'rails_helper'
 
 RSpec.describe Resource, type: :model do
   let(:identifier) { 'test' }
-  let(:rails_root_relative_path) { File.join('spec', 'fixtures', 'files', 'sample.jpg') }
-  let(:source_file_path) { Rails.root.join(rails_root_relative_path).to_s }
-  let(:source_uri) { 'railsroot://' + rails_root_relative_path }
+  let(:rails_root_relative_image_path) { File.join('spec', 'fixtures', 'files', 'sample.jpg') }
+  let(:source_file_path) { Rails.root.join(rails_root_relative_image_path).to_s }
+  let(:source_uri) { 'railsroot://' + rails_root_relative_image_path }
   let(:width) { 1920 }
   let(:height) { 3125 }
   let(:featured_region) { '320,616,1280,1280' }
@@ -14,7 +14,8 @@ RSpec.describe Resource, type: :model do
       source_uri: source_uri,
       width: width,
       height: height,
-      featured_region: featured_region
+      featured_region: featured_region,
+      pcdm_type: BestType::PcdmTypeLookup::IMAGE
     })
   end
   let(:raster_opts) do
@@ -37,29 +38,9 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#raster' do
-    let(:featured_raster_opts) { raster_opts.merge(region: 'featured') }
-
-    it 'internally runs preprocessing operations on the raster_opts, converting "featured" region to specific crop region' do
-      expect(instance).to receive(:yield_cached_raster).with(hash_including(region: /\d+,\d+,\d+,\d+/)).and_call_original
-      instance.raster(featured_raster_opts, cache_enabled: true) { |_raster_file| }
-    end
-
-    it 'runs yield_cached_raster when cache_enabled arg is true' do
-      expect(instance).to receive(:yield_cached_raster).with(raster_opts)
-      instance.raster(raster_opts, cache_enabled: true) { |_raster_file| }
-    end
-
-    it 'runs yield_uncached_raster when cache_enabled arg is false' do
-      expect(instance).to receive(:yield_uncached_raster).with(raster_opts)
-      instance.raster(raster_opts, cache_enabled: false) { |_raster_file| }
-    end
-  end
-
-  context '#run_image_property_extraction!' do
+  context '#extract_width_and_height_if_missing_or_source_changed!' do
     let(:width) { nil }
     let(:height) { nil }
-    let(:featured_region) { nil }
     let(:image_double) do
       instance_double('image').tap do |dbl|
         allow(dbl).to receive(:width).and_return(1920)
@@ -68,47 +49,62 @@ RSpec.describe Resource, type: :model do
     end
 
     before do
-      allow(Imogen::Iiif::Region::Featured).to receive(:get).and_return([10, 20, 30, 40])
       allow(Imogen).to receive(:with_image).and_yield(image_double)
+      # Skip base derivative generation for this set of tests
+      allow(instance).to receive(:queue_base_derivative_generation_if_pending)
     end
 
-    context "for a resource instance that DOES NOT currently store width, height, or featured_region values" do
-      it "extracts the expected region" do
-        expect(instance).to receive(:featured_region=).with("10,20,20,20")
-        instance.run_image_property_extraction!
-      end
-
+    context "for a new resource instance that has a source_uri, but does not currently store width or height" do
       it "extracts the expected width" do
         expect(instance).to receive(:width=).with(1920)
-        instance.run_image_property_extraction!
+        instance.extract_width_and_height_if_missing_or_source_changed!
       end
 
       it "extracts the expected height" do
         expect(instance).to receive(:height=).with(3125)
-        instance.run_image_property_extraction!
+        instance.extract_width_and_height_if_missing_or_source_changed!
       end
     end
 
-    context "for a previously saved resource instance that already stores width, height, and featured_region values" do
+    context "when the source_uri HAS NOT changed, and the method is called again" do
       before do
         # Extract properties and save before upcoming tests run
-        instance.run_image_property_extraction!
+        instance.extract_width_and_height_if_missing_or_source_changed!
         instance.save
+        expect(instance.errors.full_messages).to be_blank
       end
 
-      it "does not attempt to extract the expected region" do
-        expect(instance).not_to receive(:featured_region=)
-        instance.run_image_property_extraction!
-      end
-
-      it "does not extract the expected width" do
+      it "does not re-extract the width" do
         expect(instance).not_to receive(:width=)
-        instance.run_image_property_extraction!
+        instance.extract_width_and_height_if_missing_or_source_changed!
       end
 
-      it "extracts the expected height" do
+      it "does not re-extract the height" do
         expect(instance).not_to receive(:height=)
-        instance.run_image_property_extraction!
+        instance.extract_width_and_height_if_missing_or_source_changed!
+      end
+    end
+
+    context "when the source_uri HAS changed, and the method is called again" do
+      before do
+        # Extract properties and save before upcoming tests run
+        instance.extract_width_and_height_if_missing_or_source_changed!
+        instance.save
+        # Then change the source uri to nil and save
+        instance.source_uri = nil
+        instance.save
+        # And then reassign the source_uri to the original value
+        instance.source_uri = source_uri
+      end
+
+      it "does not re-extract the width" do
+        expect(instance).to receive(:width=)
+        instance.extract_width_and_height_if_missing_or_source_changed!
+      end
+
+      it "does not re-extract the height" do
+        expect(instance).to receive(:height=)
+        instance.extract_width_and_height_if_missing_or_source_changed!
       end
     end
   end
@@ -133,38 +129,82 @@ RSpec.describe Resource, type: :model do
   end
 
   context '#yield_cached_raster' do
-    let(:cache_path) { Rails.root.join('tmp', 'test-file.png').to_s }
-
     before do
       # We don't need a real lock for this test, so mocking the with_blocking_lock
       # method removes any Redis dependency for this test.
       allow(Triclops::Lock.instance).to receive(:with_blocking_lock).and_yield
-      # For these tests, we always want to receive the same cache_path
-      allow(Triclops::RasterCache.instance).to receive(:cache_path).and_return(cache_path)
     end
 
     after do
-      # Clean up file created by test
-      File.delete(cache_path) if File.exist?(cache_path)
+      # Clean up files created by the test
+      instance.delete_filesystem_cache!
     end
 
     it 'when an existing raster file does not exist, generates and caches a new raster file and yields that new raster file' do
-      expect(Triclops::Raster).to receive(:generate).with(source_file_path, cache_path, raster_opts).and_call_original
+      expected_cache_path = Triclops::RasterCache.instance.iiif_cache_path(instance.identifier, raster_opts)
+      expect(Triclops::Raster).to receive(:generate).with(source_file_path, expected_cache_path, raster_opts).and_call_original
 
       instance.yield_cached_raster(raster_opts) do |raster_file|
-        expect(cache_path).to eq(raster_file.path)
+        expect(raster_file.path).to eq(expected_cache_path)
       end
     end
 
-    it 'when an existing raster file exists, yields that existing raster file and does not call the generate method internally' do
+    it 'yields the same raster file when called multiple times, and does not regenerate the file for the second yield' do
       # Generate the raster
+      path_from_first_yield = nil
       instance.yield_cached_raster(raster_opts) do |raster_file|
+        path_from_first_yield = raster_file.path
       end
 
       # Then call yield_cached_raster again to return the already-generated raster
       expect(Triclops::Raster).not_to receive(:generate)
       instance.yield_cached_raster(raster_opts) do |raster_file|
-        expect(cache_path).to eq(raster_file.path)
+        expect(path_from_first_yield).to eq(raster_file.path)
+      end
+    end
+
+    context 'when two different resources have different identifiers, but the same source_uri value' do
+      let(:resource1) do
+        FactoryBot.create(:resource, source_uri: source_uri)
+      end
+      let(:resource2) do
+        FactoryBot.create(:resource, source_uri: source_uri)
+      end
+      let(:raster_opts_base) do
+        {
+          region: 'full',
+          size: 'full',
+          rotation: 0,
+          quality: 'color',
+          format: 'png'
+        }
+      end
+
+      after do
+        # Cleanup after tests
+        resource1.delete_filesystem_cache!
+        resource2.delete_filesystem_cache!
+      end
+
+      context 'when both resources have the same NON-"placeholder://"-prefixed source_uri value' do
+        it 'results in two different raster cache paths for each resource' do
+          resource1_raster_path = nil
+          resource2_raster_path = nil
+          resource1.yield_cached_raster(raster_opts) { |raster_file| resource1_raster_path = raster_file.path }
+          resource2.yield_cached_raster(raster_opts) { |raster_file| resource2_raster_path = raster_file.path }
+          expect(resource1_raster_path).not_to eq(resource2_raster_path)
+        end
+      end
+
+      context 'when both resources have the SAME "placeholder://"-prefixed source_uri value' do
+        let(:source_uri) { 'placeholder://sound' }
+        it 'uses the same raster cache path for each resource' do
+          resource1_raster_path = nil
+          resource2_raster_path = nil
+          resource1.yield_cached_raster(raster_opts) { |raster_file| resource1_raster_path = raster_file.path }
+          resource2.yield_cached_raster(raster_opts) { |raster_file| resource2_raster_path = raster_file.path }
+          expect(resource1_raster_path).to eq(resource2_raster_path)
+        end
       end
     end
   end
@@ -278,47 +318,8 @@ RSpec.describe Resource, type: :model do
 
   context 'on save' do
     it 'automatically extracts missing image properties' do
-      expect(instance).to receive(:run_image_property_extraction!)
+      expect(instance).to receive(:extract_width_and_height_if_missing_or_source_changed!)
       expect(instance.save).to eq(true)
-    end
-  end
-
-  context 'when two different resources have the same source_uri value' do
-    let(:resource1) do
-      FactoryBot.create(:resource, source_uri: source_uri, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
-    end
-    let(:resource2) do
-      FactoryBot.create(:resource, source_uri: source_uri, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
-    end
-    let(:raster_opts_base) do
-      {
-        region: 'full',
-        size: 'full',
-        rotation: 0,
-        quality: 'color',
-        format: 'png'
-      }
-    end
-
-    context 'when both resources have the same NON-"placeholder://"-prefixed source_uri value' do
-      it 'results in two different raster cache paths for each resource' do
-        resource1_raster_path = nil
-        resource2_raster_path = nil
-        resource1.raster(raster_opts, cache_enabled: true) { |raster_file| resource1_raster_path = raster_file.path }
-        resource2.raster(raster_opts, cache_enabled: true) { |raster_file| resource2_raster_path = raster_file.path }
-        expect(resource1_raster_path).not_to eq(resource2_raster_path)
-      end
-    end
-
-    context 'when both resources have the SAME "placeholder://"-prefixed source_uri value' do
-      let(:source_uri) { 'placeholder://sound' }
-      it 'uses the same raster cache path for each resource' do
-        resource1_raster_path = nil
-        resource2_raster_path = nil
-        resource1.raster(raster_opts, cache_enabled: true) { |raster_file| resource1_raster_path = raster_file.path }
-        resource2.raster(raster_opts, cache_enabled: true) { |raster_file| resource2_raster_path = raster_file.path }
-        expect(resource1_raster_path).to eq(resource2_raster_path)
-      end
     end
   end
 end

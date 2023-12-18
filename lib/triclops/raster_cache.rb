@@ -23,13 +23,6 @@ module Triclops
       )
     end
 
-    def square_base_cache_path(identifier, mkdir_p: false)
-      File.join(
-        base_cache_directory_for_identifier(identifier, mkdir_p: mkdir_p),
-        "square.#{Triclops::Iiif::Constants::BASE_IMAGE_FORMAT}"
-      )
-    end
-
     # Returns the full cache path to a raster file.
     # @param raster_opts {Hash} Raster options for the desired raster.
     def iiif_cache_path(identifier, raster_opts, mkdir_p: false)

@@ -3,11 +3,16 @@ class Resource < ApplicationRecord
   include Triclops::Resource::AsJson
   include Triclops::Resource::Validations
 
+  PCDM_TEXT_TYPES = [
+    BestType::PcdmTypeLookup::EMAIL, BestType::PcdmTypeLookup::PAGE_DESCRIPTION, BestType::PcdmTypeLookup::STRUCTURED_TEXT,
+    BestType::PcdmTypeLookup::TEXT, BestType::PcdmTypeLookup::UNSTRUCTURED_TEXT
+  ].freeze
+
   enum status: { pending: 0, processing: 1, failure: 2, ready: 3 }
 
   before_validation :extract_width_and_height_if_missing_or_source_changed!
   after_save :queue_base_derivative_generation_if_pending
-  # TODO: after_destroy :clear_base_derivatives, :clear_raster_cache
+  after_destroy :delete_filesystem_cache!
 
   # Generates a placeholder resource dynamically (without any database interaction)
   def self.placeholder_resource_for(identifier)
@@ -17,8 +22,14 @@ class Resource < ApplicationRecord
       updated_at: Time.current,
       source_uri: identifier.sub(':', '://'),
       width: PLACEHOLDER_SIZE,
-      height: PLACEHOLDER_SIZE
+      height: PLACEHOLDER_SIZE,
+      featured_region: "0,0,#{PLACEHOLDER_SIZE},#{PLACEHOLDER_SIZE}"
     )
+  end
+
+  # Clear ALL cached image files for this resource.
+  def delete_filesystem_cache!
+    FileUtils.rm_rf(Triclops::RasterCache.instance.cache_directory_for_identifier(self.identifier))
   end
 
   def queue_base_derivative_generation_if_pending
@@ -79,30 +90,13 @@ class Resource < ApplicationRecord
       )
     end
 
-    # Use full base to generate the square base
-    square_base_path = Triclops::RasterCache.instance.square_base_cache_path(self.identifier, mkdir_p: true)
-    # rubocop:disable Style/GuardClause
-    unless File.exist?(square_base_path)
-      Triclops::Raster.generate(
-        full_base_path,
-        Triclops::RasterCache.instance.square_base_cache_path(self.identifier, mkdir_p: true),
-        {
-          region: self.featured_region,
-          size: "!#{Triclops::Iiif::Constants::REDUCED_BASE_SIZE},#{Triclops::Iiif::Constants::REDUCED_BASE_SIZE}",
-          rotation: 0,
-          quality: Triclops::Iiif::Constants::BASE_QUALITY,
-          format: Triclops::Iiif::Constants::BASE_IMAGE_FORMAT
-        }
-      )
-    end
-    # rubocop:enable Style/GuardClause
+    true
   end
 
   def base_derivatives_exist?
     [
       Triclops::RasterCache.instance.full_base_cache_path(self.identifier),
-      Triclops::RasterCache.instance.reduced_base_cache_path(self.identifier),
-      Triclops::RasterCache.instance.square_base_cache_path(self.identifier)
+      Triclops::RasterCache.instance.reduced_base_cache_path(self.identifier)
     ].each do |path|
       return false unless File.exist?(path)
     end
@@ -112,16 +106,44 @@ class Resource < ApplicationRecord
   # Generates commonly requested derivtives, including:
   # - Full region scaled versions of the original, at RECOMMENDED_SIZES
   # - (todo) IIIF zooming image viewer tiles
+  # rubocop:disable Metrics/AbcSize
   def generate_commonly_requested_derivatives
     # Generate base derivatives if they don't already exist?
     generate_base_derivatives unless self.base_derivatives_exist?
 
     full_base_path = Triclops::RasterCache.instance.full_base_cache_path(self.identifier)
 
-    # Generate recommended rasters at recommended sizes and Triclops::Iiif::Constants::BASE_QUALITY quality
+    # Generate recommended rasters at recommended sizes
+    # with Triclops::Iiif::Constants::BASE_QUALITY quality
+    # and Triclops::Iiif::Constants::DEFAULT_FORMAT format.
     Triclops::Iiif::Constants::RECOMMENDED_SIZES.each do |size|
       raster_opts = {
         region: 'full',
+        size: "!#{size},#{size}",
+        rotation: 0,
+        quality: Triclops::Iiif::Constants::BASE_QUALITY,
+        format: Triclops::Iiif::Constants::DEFAULT_FORMAT
+      }
+      iiif_cache_path = Triclops::RasterCache.instance.iiif_cache_path(
+        self.identifier,
+        raster_opts,
+        mkdir_p: true
+      )
+      next if File.exist?(iiif_cache_path)
+
+      Triclops::Raster.generate(
+        full_base_path,
+        iiif_cache_path,
+        raster_opts
+      )
+    end
+
+    # Generate recommended square versions at recommended sizes
+    # with Triclops::Iiif::Constants::BASE_QUALITY quality
+    # and Triclops::Iiif::Constants::DEFAULT_FORMAT format.
+    Triclops::Iiif::Constants::PRE_GENERATED_SQUARE_SIZES.each do |size|
+      raster_opts = {
+        region: self.featured_region,
         size: "!#{size},#{size}",
         rotation: 0,
         quality: Triclops::Iiif::Constants::BASE_QUALITY,
@@ -169,6 +191,7 @@ class Resource < ApplicationRecord
 
     true
   end
+  # rubocop:enable Metrics/AbcSize
 
   # Returns an array of scale factors (e.g. [1, 2, 4, 8, 16]), based on the image dimensions
   # and the given tile_size.
@@ -183,11 +206,15 @@ class Resource < ApplicationRecord
     # If width and height are already known, and the source_uri hasn't changed, no need to extract.
     return if self.width.present? && self.height.present? && !source_uri_changed?
 
-    self.with_source_image_file do |source_image_file|
-      Imogen.with_image(source_image_file.path) do |img|
-        self.width = img.width
-        self.height = img.height
+    begin
+      self.with_source_image_file do |source_image_file|
+        Imogen.with_image(source_image_file.path) do |img|
+          self.width = img.width
+          self.height = img.height
+        end
       end
+    rescue Errno::ENOENT => e
+      self.errors.add(:source_uri, e.message)
     end
   end
 
@@ -254,9 +281,7 @@ class Resource < ApplicationRecord
       'placeholder:sound'
     when BestType::PcdmTypeLookup::VIDEO
       'placeholder:moving_image'
-    when  BestType::PcdmTypeLookup::EMAIL, BestType::PcdmTypeLookup::PAGE_DESCRIPTION,
-          BestType::PcdmTypeLookup::STRUCTURED_TEXT, BestType::PcdmTypeLookup::TEXT,
-          BestType::PcdmTypeLookup::UNSTRUCTURED_TEXT
+    when *PCDM_TEXT_TYPES
       'placeholder:text'
     when BestType::PcdmTypeLookup::SOFTWARE
       'placeholder:software'
@@ -299,7 +324,6 @@ class Resource < ApplicationRecord
 
   # @api private
   def yield_uncached_raster(raster_opts)
-    temp_file = nil
     raster_tempfile_path = self.class.generate_raster_tempfile_path(raster_opts[:format])
     FileUtils.mkdir_p(File.dirname(raster_tempfile_path))
     self.with_source_image_file do |source_image_file|

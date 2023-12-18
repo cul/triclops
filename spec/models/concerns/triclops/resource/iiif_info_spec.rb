@@ -31,6 +31,7 @@ RSpec.describe Resource, type: :model do
     let(:formats) { ['png', 'jpg'] }
     let(:qualities) { ['default', 'color', 'gray', 'bitonal'] }
     let(:tile_size) { 512 }
+    let(:scale_factors) { [1, 2, 4, 8, 16] }
     it 'returns the expected hash' do
       expect(
         {
@@ -45,10 +46,10 @@ RSpec.describe Resource, type: :model do
             { width: 629, height: 1024 },
             { width: 786, height: 1280 }
           ],
-          'tiles': [{ 'width': tile_size, 'scaleFactors': [1] }],
+          'tiles': [{ 'width': tile_size, 'scaleFactors': scale_factors }],
           'profile': ['http://iiif.io/api/image/2/level2.json', { 'formats': formats, 'qualities': qualities }]
         }
-      ).to eq(instance.iiif_info(id_url, width, height, sizes, formats, qualities, tile_size))
+      ).to eq(instance.iiif_info(id_url, width, height, sizes, formats, qualities, tile_size, scale_factors))
     end
   end
 end

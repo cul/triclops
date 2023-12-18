@@ -8,7 +8,7 @@ RSpec.describe "images#raster", type: :request do
     let(:invalid_raster_url) { "/iiif/2/#{invalid_identifier}/full/512,/0/default.jpg" }
 
     before {
-      FactoryBot.create(:resource, :ready, identifier: valid_identifier, pcdm_type: BestType::PcdmTypeLookup::IMAGE)
+      FactoryBot.create(:resource, :ready, identifier: valid_identifier)
     }
 
     context "successful response" do

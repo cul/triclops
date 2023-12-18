@@ -33,16 +33,21 @@ Metrics/ClassLength:
 
 Metrics/PerceivedComplexity:
   Exclude:
+    - 'config/initializers/**/*'
     - 'app/models/resource.rb'
     - 'app/controllers/iiif/images_controller.rb'
 
 Metrics/CyclomaticComplexity:
   Exclude:
+    - 'config/initializers/**/*'
     - 'app/models/resource.rb'
     - 'app/controllers/iiif/images_controller.rb'
 
 Metrics/MethodLength:
-  Max: 12
+  Max: 14
+  Exclude:
+    - 'config/initializers/**/*'
+    - 'app/models/resource.rb'
 
 Metrics/ParameterLists:
   Exclude:
@@ -56,6 +61,11 @@ RSpec/ExampleLength:
 
 RSpec/MessageSpies:
   Enabled: false
+
+Metrics/AbcSize:
+  Max: 21
+  Exclude:
+    - 'config/initializers/**/*'
 
 RSpec/MultipleExpectations:
   Enabled: false

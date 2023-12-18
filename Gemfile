@@ -45,7 +45,7 @@ gem 'bootsnap', '>= 1.4.2', require: false
 
 group :development, :test do
   # rubocop + CUL presets
-  gem 'rubocul', '~> 4.0.6'
+  gem 'rubocul', '~> 4.0.8'
   # gem 'rubocul', path: '../rubocul'
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]

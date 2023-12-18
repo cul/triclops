@@ -9,6 +9,7 @@ FactoryBot.define do
     width { 1920 }
     height { 3125 }
     featured_region { '320,616,1280,1280' }
+    pcdm_type { BestType::PcdmTypeLookup::IMAGE }
 
     trait :ready do
       status { Resource.statuses[:ready] }

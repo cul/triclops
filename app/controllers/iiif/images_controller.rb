@@ -3,7 +3,7 @@ class Iiif::ImagesController < ApplicationController
   include Triclops::Iiif::ImagesController::Schemas
   include Triclops::Iiif::ImagesController::Sizing
 
-  before_action :add_cors_header!, only: [:info]
+  before_action :add_cors_header!, only: [:info, :raster]
   before_action :set_resource_or_handle_not_found, only: [:info, :raster, :test_viewer]
 
   def info
@@ -12,24 +12,9 @@ class Iiif::ImagesController < ApplicationController
       return
     end
 
-    compliance_level_url =
-      if TRICLOPS[:raster_cache][:on_miss] == 'error'
-        'http://iiif.io/api/image/2/level0.json'
-      else
-        'http://iiif.io/api/image/2/level1.json'
-      end
-    response.set_header('Link', compliance_level_url)
+    assign_compliance_level_header!(response)
 
-    render json: @resource.iiif_info(
-      iiif_info_url(@resource.identifier)[0...-10], # chop off last 10 characters to remove "/info.json"
-      @resource.width,
-      @resource.height,
-      Triclops::Iiif::Constants::RECOMMENDED_SIZES.map { |size| closest_size(size, @resource.width, @resource.height) },
-      Triclops::Iiif::Constants::ALLOWED_FORMATS.keys,
-      Triclops::Iiif::Constants::ALLOWED_QUALITIES,
-      Triclops::Iiif::Constants::TILE_SIZE,
-      @resource.scale_factors_for_tile_size(Triclops::Iiif::Constants::TILE_SIZE)
-    )
+    render json: info_json_for_resource(@resource)
   end
 
   # GET /iiif/2/:identifier/:region/:size/:rotation/:quality.(:format)
@@ -47,6 +32,16 @@ class Iiif::ImagesController < ApplicationController
     original_raster_opts.delete(:identifier) # :identifier isn't part of our "raster opts"
     normalized_raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(@resource, original_raster_opts)
 
+    handle_ready_resource_or_redirect(@resource, original_raster_opts, normalized_raster_opts)
+  end
+
+  def test_viewer
+    render layout: 'test_viewer'
+  end
+
+  private
+
+  def handle_ready_resource_or_redirect(resource, original_raster_opts, normalized_raster_opts)
     # Whenever a valid resource is requested, cache the Resource identifier in
     # our ResourceAccessStatCache. This cache will be periodically flushed to the
     # Resource database (by a separate process) so that many access time updates
@@ -56,25 +51,20 @@ class Iiif::ImagesController < ApplicationController
     # accessed cache items should be kept.
     # Note: We only need to cache access times if caching is enabled. Resource
     # access time doesn't matter if we're not caching anything.
-    Triclops::ResourceAccessStatCache.instance.add(@resource.identifier) if
+    Triclops::ResourceAccessStatCache.instance.add(resource.identifier) if
       TRICLOPS[:raster_cache][:access_stats_enabled]
 
-    if @resource.ready?
+    if resource.ready?
       handle_ready_resource(original_raster_opts, normalized_raster_opts)
     else
       Rails.logger.debug(
-        "[#{@resource.identifier}] Redirecting raster request to placeholder image because resource is not ready"
+        "[#{resource.identifier}] Redirecting raster request to placeholder image because resource is not ready"
       )
-      redirect_to params.to_unsafe_h.merge(identifier: @resource.placeholder_identifier_for_pcdm_type), status: :found
+      redirect_to params.to_unsafe_h.merge(identifier: resource.placeholder_identifier_for_pcdm_type), status: :found
     end
   end
 
-  def test_viewer
-    render layout: 'test_viewer'
-  end
-
-  private
-
+  # rubocop:disable Metrics/MethodLength
   def handle_ready_resource(original_raster_opts, normalized_raster_opts)
     cache_hit = @resource.raster_exists?(normalized_raster_opts)
     unless cache_hit
@@ -84,18 +74,19 @@ class Iiif::ImagesController < ApplicationController
         "(normalized_raster_opts: #{normalized_raster_opts.inspect})"
       )
     end
-    if cache_hit || TRICLOPS[:raster_cache][:on_miss] == 'generate_and_cache' || @resource.source_uri_is_placeholder?
+    if cache_hit || TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::GENERATE_AND_CACHE || @resource.source_uri_is_placeholder?
       @resource.yield_cached_raster(normalized_raster_opts) do |raster_file|
         send_raster_file(raster_file, normalized_raster_opts, @resource.updated_at, delivery_method: :send_file)
       end
-    elsif TRICLOPS[:raster_cache][:on_miss] == 'generate_and_do_not_cache'
+    elsif TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::GENERATE_AND_DO_NOT_CACHE
       @resource.yield_uncached_raster(normalized_raster_opts) do |raster_file|
         send_raster_file(raster_file, normalized_raster_opts, @resource.updated_at, delivery_method: :send_data)
       end
-    else # TRICLOPS[:raster_cache][:on_miss] == 'error'
+    else # TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::ERROR
       render plain: 'not found', status: :not_found
     end
   end
+  # rubocop:enable Metrics/MethodLength
 
   def error_response(errors)
     { result: false, errors: errors }
@@ -137,9 +128,7 @@ class Iiif::ImagesController < ApplicationController
   #                          file on the filesystem, or send_data for a temporary file.
   def send_raster_file(raster_file, raster_opts, modification_time, delivery_method: :send_file)
     expires_in 365.days, public: true
-    response['Content-Length'] = File.size(raster_file.path).to_s
-    response['Last-Modified'] = modification_time.httpdate
-    response['ETag'] = format('"%x"', modification_time)
+    assign_headers_for_sent_file!(response, raster_file, modification_time)
     # We can't use send_file on a temporary file that's deleted when we're
     # done with it, since send_file delegates file serving to the
     # webserver, so when the cache is turned off we'll use send_data.
@@ -150,6 +139,35 @@ class Iiif::ImagesController < ApplicationController
     else
       raise 'Invalid delivery method.'
     end
+  end
+
+  def assign_headers_for_sent_file!(resp, raster_file, modification_time)
+    resp['Content-Length'] = File.size(raster_file.path).to_s
+    resp['Last-Modified'] = modification_time.httpdate
+    resp['ETag'] = format('"%x"', modification_time)
+  end
+
+  def assign_compliance_level_header!(resp)
+    compliance_level_url =
+      if TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::ERROR
+        'http://iiif.io/api/image/2/level0.json'
+      else
+        'http://iiif.io/api/image/2/level1.json'
+      end
+    resp.set_header('Link', compliance_level_url)
+  end
+
+  def info_json_for_resource(resource)
+    resource.iiif_info(
+      iiif_info_url(resource.identifier)[0...-10], # chop off last 10 characters to remove "/info.json"
+      resource.width,
+      resource.height,
+      Triclops::Iiif::Constants::RECOMMENDED_SIZES.map { |size| closest_size(size, resource.width, resource.height) },
+      Triclops::Iiif::Constants::ALLOWED_FORMATS.keys,
+      Triclops::Iiif::Constants::ALLOWED_QUALITIES,
+      Triclops::Iiif::Constants::TILE_SIZE,
+      resource.scale_factors_for_tile_size(Triclops::Iiif::Constants::TILE_SIZE)
+    )
   end
 
   # def cacheable_raster?(resource, raster_opts)

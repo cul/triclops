@@ -3,7 +3,7 @@ module Api
     class ResourcesController < ApiController
       before_action :authenticate_request_token
       before_action :ensure_json_request
-      before_action :set_resource, only: [:show, :create_or_update, :destroy]
+      before_action :set_resource, only: [:show, :create_or_replace, :destroy]
 
       # GET /resources/:id
       # GET /resources/:id.json
@@ -12,21 +12,21 @@ module Api
           render json: @resource
         else
           render json: {
-            errors: ["Could not find resource with identifier: #{identifier}"]
+            errors: ["Could not find resource with identifier: #{params[:id]}"]
           }, status: :not_found
         end
       end
 
       # PATCH/PUT /resources/:id
       # PATCH/PUT /resources/:id.json
-      def create_or_update
+      def create_or_replace
         success_status = :ok
 
         if @resource.nil?
-          @resource = Resource.create(create_or_update_params.merge(identifier: params[:id]))
+          @resource = Resource.create(create_params.merge(identifier: params[:id]))
           success_status = :created
         else
-          @resource.update(create_or_update_params)
+          @resource.update(create_params)
         end
 
         if @resource.errors.present?
@@ -52,7 +52,7 @@ module Api
           @resource = Resource.find_by(identifier: params[:id])
         end
 
-        def create_or_update_params
+        def create_params
           params.require(:resource).permit(:source_uri, :featured_region, :pcdm_type)
         end
     end

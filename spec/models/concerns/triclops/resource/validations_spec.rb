@@ -30,11 +30,8 @@ RSpec.describe Resource, type: :model do
     end
 
     context 'source_uri' do
-      it 'must be present' do
-        instance.source_uri = nil
-        instance.save
-        expect(instance.errors.attribute_names).to eq([:source_uri])
-        instance.source_uri = ''
+      it 'must be readable if present' do
+        instance.source_uri = 'file:///does-not-exist'
         instance.save
         expect(instance.errors.attribute_names).to eq([:source_uri])
       end
@@ -49,8 +46,13 @@ RSpec.describe Resource, type: :model do
       end
     end
 
-    context 'width and height fields' do
+    context 'bad values for width and height fields' do
       before do
+        # For this set of tests, we need to source_uri_changed? return value to false,
+        # otherwise the instance will try to re-extract the width and height from
+        # the source file and will ignore the values we are supplying in the test.
+        allow(instance).to receive(:source_uri_changed?).and_return(false)
+
         instance.width = width
         instance.height = height
       end
@@ -79,17 +81,14 @@ RSpec.describe Resource, type: :model do
         let(:height) { 2.5 }
 
         it do
+          # For this test, need to source_uri_changed? return value to false,
+          # otherwise the instance will try to re-extract the width and height from
+          # the source file and will ignore the values we are supplying in the test.
+          allow(instance).to receive(:source_uri_changed?).and_return(false)
+
           expect(instance).not_to be_valid
           expect(instance.errors.attribute_names).to include(:width, :height)
         end
-      end
-    end
-
-    context 'readable location uri' do
-      it 'fails to save when the source_uri is not a readable file' do
-        instance.source_uri = 'file:///does-not-exist'
-        instance.save
-        expect(instance.errors.attribute_names).to eq([:source_uri])
       end
     end
   end
