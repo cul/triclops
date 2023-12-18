@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ruby-version: ['3.0.3']
-        node: ['10', '12']
+        ruby-version: ['3.2.2']
+        node: ['16']
         redis-version: [4]
     env:
       RAILS_ENV: test
