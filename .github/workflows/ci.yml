@@ -11,7 +11,7 @@ jobs:
       matrix:
         ruby-version: ['3.2.2']
         node: ['16']
-        redis-version: [4]
+        redis-version: [7]
     env:
       RAILS_ENV: test
       NOKOGIRI_USE_SYSTEM_LIBRARIES: true
