@@ -1,9 +1,9 @@
 GIT
   remote: https://github.com/cul/imogen.git
-  revision: 7e388aeb9d987f7f6e10a537807b1ab54eb6fba5
+  revision: 93fe37dcf7ff7f9f0b2d843bcc71f80a7b1b9d79
   branch: iiif_tile_generation_fixes
   specs:
-    imogen (0.3.2)
+    imogen (0.4.0.pre.rc.1)
       ruby-vips
 
 GEM

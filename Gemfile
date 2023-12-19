@@ -6,7 +6,7 @@ gem 'best_type', '~> 0.0.10'
 # For schema validation
 gem 'dry-validation', '~> 1.10.0'
 # Use imogen for generating images
-# gem 'imogen', '~> 0.3.2'
+# gem 'imogen', '~> 0.4.0'
 # gem 'imogen', path: '../imogen'
 gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'iiif_tile_generation_fixes'
 # Explicitly including io-wait dependency to match default version of the gem that comes with Ruby 3.0.

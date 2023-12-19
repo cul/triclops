@@ -11,7 +11,7 @@ placeholder_image_paths = Dir.glob(File.join(PLACEHOLDER_ROOT, '/*'))
 KNOWN_PLACEHOLDER_IDENTIFIERS = placeholder_image_paths.map do |file_path|
   "placeholder:#{File.basename(file_path, '.*')}"
 end
-PLACEHOLDER_SIZE = Imogen.with_image(placeholder_image_paths.first, &:width)
+PLACEHOLDER_SIZE = Imogen.with_image(placeholder_image_paths.first, { revalidate: true }, &:width)
 
 def validate_triclops_config!
   if TRICLOPS[:raster_cache].nil? || TRICLOPS[:raster_cache][:on_miss].nil?

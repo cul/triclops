@@ -12,7 +12,7 @@ module Triclops
       if File.exist?(raster_file_path)
         raise Triclops::Exceptions::RasterExists, "Raster file already exists at: #{raster_file_path}"
       end
-      Imogen.with_image(source_image_file_path) do |img|
+      Imogen.with_image(source_image_file_path, { revalidate: true }) do |img|
         Imogen::Iiif.convert(
           img, raster_file_path, nil, raster_opts
         )

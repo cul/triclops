@@ -165,7 +165,7 @@ class Resource < ApplicationRecord
 
     # Generate IIIF zooming image viewer tiles
 
-    Imogen.with_image(full_base_path) do |image|
+    Imogen.with_image(full_base_path, { revalidate: true }) do |image|
       Imogen::Iiif::Tiles.for(
         image,
         Triclops::RasterCache.instance.iiif_cache_directory_for_identifier(self.identifier),
@@ -179,7 +179,7 @@ class Resource < ApplicationRecord
     end
     # If the Imogen::Iiif::Tiles.generate_with_vips_dzsave method were fully implemented,
     # we would call it like this:
-    # Imogen.with_image(full_base_path) do |image|
+    # Imogen.with_image(full_base_path, { revalidate: true }) do |image|
     #   Imogen::Iiif::Tiles.generate_with_vips_dzsave(
     #     image,
     #     Triclops::RasterCache.instance.iiif_cache_directory_for_identifier(self.identifier),
@@ -208,7 +208,9 @@ class Resource < ApplicationRecord
 
     begin
       self.with_source_image_file do |source_image_file|
-        Imogen.with_image(source_image_file.path) do |img|
+        # NOTE: Must use `nocache: true` option below so that new width and height
+        # are always re-checked for recently rotated images.
+        Imogen.with_image(source_image_file.path, { revalidate: true }) do |img|
           self.width = img.width
           self.height = img.height
         end
