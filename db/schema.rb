@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2019_09_25_230507) do
+ActiveRecord::Schema[7.0].define(version: 2024_01_03_190230) do
   create_table "resources", force: :cascade do |t|
     t.string "identifier"
     t.text "source_uri"
@@ -25,6 +25,13 @@ ActiveRecord::Schema[7.0].define(version: 2019_09_25_230507) do
     t.datetime "accessed_at"
     t.index ["identifier"], name: "index_resources_on_identifier", unique: true
     t.index ["status"], name: "index_resources_on_status"
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "uid"
+    t.string "provider"
   end
 
 end
