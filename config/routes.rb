@@ -20,6 +20,11 @@ Rails.application.routes.draw do
     mount Resque::Server.new, at: '/resque'
   end
 
+  devise_scope :user do
+    get 'sign_in', :to => 'users/sessions#new', :as => :new_user_session
+    get 'sign_out', :to => 'users/sessions#destroy', :as => :destroy_user_session
+  end
+
   namespace :api do
     namespace :v1, defaults: { format: :json } do
       resources :resources, only: [:show, :destroy]

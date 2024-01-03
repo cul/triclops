@@ -1,0 +1,24 @@
+cas: &CAS
+  host: cas.columbia.edu
+  login_url: /cas/login
+  logout_url: /cas/logout
+  service_validate_url: /cas/serviceValidate
+  disable_ssl_verification: true
+  provider: cas
+saml: &SAML
+  <<: *CAS
+  provider: saml
+  service_validate_url: /cas/samlValidate
+wind: &WIND
+  host: wind.columbia.edu  
+  login_url: /login
+  logout_url: /logout
+  service_validate_url: /validate
+  service: 'your_service_key_here'
+  provider: wind
+
+development: *CAS
+test: *CAS
+myapp_dev: *CAS
+mypp_test: *CAS
+myapp_prod: *CAS
