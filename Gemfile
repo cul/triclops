@@ -34,8 +34,9 @@ gem 'sass-rails', '~> 5'
 gem 'sqlite3', '~> 1.4'
 gem 'vite_rails'
 # Use devise and omniauth for authentication
-gem 'cul_omniauth'
 gem 'devise'
+gem 'cul_omniauth', '~> 0.8.0'
+gem 'psych', '~> 3'
 
 # Use Active Model has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
