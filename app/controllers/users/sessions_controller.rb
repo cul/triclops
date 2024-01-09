@@ -16,7 +16,6 @@ class Users::SessionsController < Devise::SessionsController
   # Log in with a development account instead of the default CAS login.
   # Used only in the development environment, as a convenience.
   def developer_new
-    puts 'in development'
     return unless Rails.env.development?
 
     unless user_signed_in?
@@ -26,7 +25,6 @@ class Users::SessionsController < Devise::SessionsController
 
       sign_in(dev_user, scope: :user)
     end
-    puts 'signed in developer'
     redirect_to root_path
   end
 end

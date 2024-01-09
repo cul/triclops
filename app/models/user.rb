@@ -42,6 +42,7 @@ class User < ApplicationRecord
   def has_affil(affil = nil)
     return false if affil.blank?
     return false unless affils
+
     affils.include?(affil)
   end
 
