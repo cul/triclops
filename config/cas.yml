@@ -18,6 +18,6 @@ saml: &SAML
 development: *SAML
 test: *SAML
 
-key_resources_dev: *SAML
-key_resources_test: *SAML
-key_resources_prod: *SAML
+triclops_dev: *SAML
+triclops_test: *SAML
+triclops_prod: *SAML
