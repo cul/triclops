@@ -18,7 +18,7 @@ gem 'mysql2', '~> 0.5.5'
 # Use Puma as the app server
 gem 'puma', '~> 5.2'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 7.0.8'
+gem 'rails', '~> 7.1.2'
 # Rainbow for text coloring
 gem 'rainbow', '~> 3.0'
 # Use Redis adapter to run Action Cable in production
@@ -37,8 +37,6 @@ gem 'vite_rails'
 gem 'cul_omniauth', '~> 0.8.0'
 gem 'devise'
 
-gem 'psych', '~> 3'
-
 # Fetch ldap details - first name, last name, etc.
 gem 'net-ldap'
 
@@ -50,6 +48,9 @@ gem 'net-ldap'
 
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.4.2', require: false
+
+# For ruby 3.2.2, force specific version of certain standard gems:
+gem 'base64', '0.1.1'
 
 group :development, :test do
   # rubocop + CUL presets

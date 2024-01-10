@@ -43,6 +43,7 @@ yarn-debug.log*
 triclops.yml
 database.yml
 redis.yml
+resque.yml
 
 # macOS Files
 .DS_Store
