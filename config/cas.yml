@@ -2,37 +2,22 @@
 # SAML configuration for authentication via cul_omniauth.
 #
 
-# cas: &CAS
-#   host: cas.columbia.edu
-#   # host: casdev.cc.columbia.edu
-#   login_url: /cas/login
-#   logout_url: /cas/logout
-#   service_validate_url: /cas/serviceValidate
-#   disable_ssl_verification: true
-#   provider: cas
-# saml: &SAML
-#   <<: *CAS
-#   provider: saml
-#   service_validate_url: /cas/samlValidate
-
-development:
+cas: &CAS
   host: cas.columbia.edu
+  # host: casdev.cc.columbia.edu
   login_url: /cas/login
   logout_url: /cas/logout
+  service_validate_url: /cas/serviceValidate
   disable_ssl_verification: true
-  provider: saml
-  service_validate_url: /cas/samlValidate
-test:
-  host: cas.columbia.edu
-  login_url: /cas/login
-  logout_url: /cas/logout
-  disable_ssl_verification: true
+  provider: cas
+saml: &SAML
+  <<: *CAS
   provider: saml
   service_validate_url: /cas/samlValidate
 
-# development: *SAML
-# test: *SAML
+development: *SAML
+test: *SAML
 
-# triclops_dev: *SAML
-# triclops_test: *SAML
-# triclops_prod: *SAML
+triclops_dev: *SAML
+triclops_test: *SAML
+triclops_prod: *SAML

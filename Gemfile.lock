@@ -1,4 +1,16 @@
 GIT
+  remote: https://github.com/cul/cul_omniauth
+  revision: 44c003acbefc5dd4ab0455223b6cf0ec9cdd7a74
+  ref: 44c003acbefc5dd4ab0455223b6cf0ec9cdd7a74
+  specs:
+    cul_omniauth (0.8.0)
+      cancancan (~> 3.0)
+      devise
+      devise-guests (~> 0.3)
+      omniauth-cas
+      rails (~> 7.0)
+
+GIT
   remote: https://github.com/cul/imogen.git
   revision: 93fe37dcf7ff7f9f0b2d843bcc71f80a7b1b9d79
   branch: iiif_tile_generation_fixes
@@ -123,12 +135,6 @@ GEM
     concurrent-ruby (1.2.2)
     connection_pool (2.4.1)
     crass (1.0.6)
-    cul_omniauth (0.8.0)
-      cancancan (~> 3.0)
-      devise
-      devise-guests (~> 0.3)
-      omniauth-cas
-      rails (~> 7.0)
     date (3.3.4)
     devise (4.9.3)
       bcrypt (~> 3.0)
@@ -466,7 +472,7 @@ DEPENDENCIES
   capistrano-cul
   capistrano-passenger (~> 0.1)
   capistrano-rails (~> 1.4)
-  cul_omniauth (~> 0.8.0)
+  cul_omniauth!
   devise
   dry-validation (~> 1.10.0)
   factory_bot_rails (~> 6.0)
