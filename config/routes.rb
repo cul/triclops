@@ -9,11 +9,10 @@ Rails.application.routes.draw do
   devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
   devise_scope :user do
     if Rails.env.development?
-      get '/users/development/sign_in', to: 'users/development#sign_in'
+      get '/users/development/sign_in_developer', to: 'users/development#sign_in_developer'
       get '/users/development/output_current_user', to: 'users/development#output_current_user'
     end
   end
-
 
   resque_web_constraint = lambda do |request|
     current_user = request.env['warden'].user

@@ -10,7 +10,6 @@ Bundler.require(*Rails.groups)
 
 module Triclops
   class Application < Rails::Application
-
     config.load_defaults 7.0
 
     # Rails will use the Eastern time zone

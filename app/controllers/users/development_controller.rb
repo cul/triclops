@@ -1,7 +1,7 @@
 class Users::DevelopmentController < Devise::SessionsController
   # Log in with a development account instead of the default CAS login.
   # Used only in the development environment, as a convenience.
-  def sign_in
+  def sign_in_developer
     return unless Rails.env.development?
 
     unless user_signed_in?
@@ -15,7 +15,5 @@ class Users::DevelopmentController < Devise::SessionsController
     redirect_to root_path
   end
 
-  def output_current_user
-    render plain: "The current user is: #{current_user.present? ? current_user.uid : '[none]'}"
-  end
+  def output_current_user; end
 end
