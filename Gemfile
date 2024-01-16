@@ -34,9 +34,10 @@ gem 'sass-rails', '~> 5'
 gem 'sqlite3', '~> 1.4'
 gem 'vite_rails', '~> 3.0.17'
 # Use devise and omniauth for authentication
+gem 'devise'
+gem 'omniauth'
 # gem 'omniauth-cul', '~> 0.1.0'
 gem 'omniauth-cul', git: 'https://github.com/cul/omniauth-cul.git', branch: 'main'
-gem 'devise'
 
 # Fetch ldap details - first name, last name, etc.
 gem 'net-ldap'

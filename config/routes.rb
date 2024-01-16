@@ -4,9 +4,16 @@ require 'resque/server'
 
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
-  devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
-
   root 'pages#home'
+
+  devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
+  devise_scope :user do
+    if Rails.env.development?
+      get '/users/development/sign_in', to: 'users/development#sign_in'
+      get '/users/development/output_current_user', to: 'users/development#output_current_user'
+    end
+  end
+
 
   resque_web_constraint = lambda do |request|
     current_user = request.env['warden'].user
@@ -15,12 +22,6 @@ Rails.application.routes.draw do
 
   constraints resque_web_constraint do
     mount Resque::Server.new, at: '/resque'
-  end
-
-  devise_scope :user do
-    if Rails.env.development?
-      get 'sign_in_developer', to: 'users/sessions#developer_new', as: 'developer_new_user_session'
-    end
   end
 
   namespace :api do
