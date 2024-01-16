@@ -1,0 +1,11 @@
+# Permissions
+
+all: &all
+  allowed_user_ids:
+    - nw2555
+    - elo2212
+  allowed_user_affils:
+    - CUL_dpts-ldpd
+
+development: *all
+test: *all
