@@ -497,7 +497,7 @@ DEPENDENCIES
   simplecov (~> 0.22)
   sqlite3 (~> 1.4)
   tzinfo-data
-  vite_rails
+  vite_rails (~> 3.0.17)
   web-console (>= 3.3.0)
 
 BUNDLED WITH

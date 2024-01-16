@@ -32,7 +32,7 @@ gem 'resque', '~> 2.6'
 gem 'sass-rails', '~> 5'
 # Use sqlite3 as the database for Active Record
 gem 'sqlite3', '~> 1.4'
-gem 'vite_rails'
+gem 'vite_rails', '~> 3.0.17'
 # Use devise and omniauth for authentication
 gem 'cul_omniauth', git: 'https://github.com/cul/cul_omniauth', ref: '44c003acbefc5dd4ab0455223b6cf0ec9cdd7a74'
 gem 'devise'
