@@ -9,9 +9,7 @@ module Triclops
     #   A hash of IIIF options (e.g. {identifier: '...', region: '...', size: '...', etc. })
     # @return [void]
     def self.generate(source_image_file_path, raster_file_path, raster_opts)
-      if File.exist?(raster_file_path)
-        raise Triclops::Exceptions::RasterExists, "Raster file already exists at: #{raster_file_path}"
-      end
+      raise Triclops::Exceptions::RasterExists, "Raster file already exists at: #{raster_file_path}" if File.exist?(raster_file_path)
       Imogen.with_image(source_image_file_path, { revalidate: true }) do |img|
         Imogen::Iiif.convert(
           img, raster_file_path, nil, raster_opts

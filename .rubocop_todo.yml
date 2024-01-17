@@ -260,12 +260,6 @@ Style/StringLiterals:
     - 'spec/triclops/raster_cache_spec.rb'
     - 'spec/triclops/raster_spec.rb'
 
-Style/IfUnlessModifier:
-  Exclude:
-    - 'app/models/user.rb'
-    - 'config/routes.rb'
-    - 'lib/triclops/raster.rb'
-
 # Offense count: 15
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowHeredoc, AllowURI, URISchemes, IgnoreCopDirectives, AllowedPatterns.
