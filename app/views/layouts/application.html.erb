@@ -20,6 +20,9 @@
   </head>
 
   <body data-app-version="<%= APP_VERSION %>">
-    <div id="root"><%= yield %></div>
+    <% flash.each do |type, msg| %>
+      <div class="alert"><%= msg %></div>
+    <% end %>
+    <%= yield %>
   </body>
 </html>

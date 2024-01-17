@@ -18,7 +18,7 @@ gem 'mysql2', '~> 0.5.5'
 # Use Puma as the app server
 gem 'puma', '~> 5.2'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '~> 7.0.8'
+gem 'rails', '~> 7.1.2'
 # Rainbow for text coloring
 gem 'rainbow', '~> 3.0'
 # Use Redis adapter to run Action Cable in production
@@ -32,7 +32,12 @@ gem 'resque', '~> 2.6'
 gem 'sass-rails', '~> 5'
 # Use sqlite3 as the database for Active Record
 gem 'sqlite3', '~> 1.4'
-gem 'vite_rails'
+gem 'vite_rails', '~> 3.0.17'
+# Use devise and omniauth for authentication
+gem 'devise'
+gem 'omniauth'
+gem 'omniauth-cul', '~> 0.2.0'
+# gem 'omniauth-cul', git: 'https://github.com/cul/omniauth-cul.git', branch: 'main'
 
 # Use Active Model has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
@@ -42,6 +47,9 @@ gem 'vite_rails'
 
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.4.2', require: false
+
+# For ruby 3.2.2, force specific version of certain standard gems:
+gem 'base64', '0.1.1'
 
 group :development, :test do
   # rubocop + CUL presets
@@ -55,7 +63,7 @@ group :development, :test do
   gem 'factory_bot_rails', '~> 6.0'
   # rspec for testing
   gem 'rspec', '>= 3.11'
-  gem 'rspec-rails', '~> 5.1'
+  gem 'rspec-rails', '~> 6.1'
   # simplecov for test coverage
   gem 'simplecov', '~> 0.22', require: false
 end

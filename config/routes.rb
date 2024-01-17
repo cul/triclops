@@ -6,17 +6,20 @@ Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
   root 'pages#home'
 
-  # Constraint for restricting certain routes to only admins, or to the development environment
-  dev_or_admin_constraints = lambda do |_request|
-    # TODO: Setup devise so resque-web is behind authentication
-
-    # return true if Rails.env.development?
-    # current_user = request.env['warden'].user
-    # current_user&.is_admin?
-    true
+  devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
+  devise_scope :user do
+    if Rails.env.development?
+      get '/users/development/sign_in_developer', to: 'users/development#sign_in_developer'
+      get '/users/development/output_current_user', to: 'users/development#output_current_user'
+    end
   end
 
-  constraints dev_or_admin_constraints do
+  resque_web_constraint = lambda do |request|
+    current_user = request.env['warden'].user
+    current_user.present?
+  end
+
+  constraints resque_web_constraint do
     mount Resque::Server.new, at: '/resque'
   end
 

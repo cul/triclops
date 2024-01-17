@@ -23,6 +23,7 @@ set :deploy_to, "/opt/passenger/#{fetch(:deploy_name)}"
 append  :linked_files,
         'config/database.yml',
         'config/triclops.yml',
+        'config/permissions.yml',
         'config/redis.yml',
         'config/resque.yml',
         'config/master.key'
