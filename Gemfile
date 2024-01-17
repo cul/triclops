@@ -66,7 +66,7 @@ group :development, :test do
   gem 'factory_bot_rails', '~> 6.0'
   # rspec for testing
   gem 'rspec', '>= 3.11'
-  gem 'rspec-rails', '~> 5.1'
+  gem 'rspec-rails', '~> 6.1'
   # simplecov for test coverage
   gem 'simplecov', '~> 0.22', require: false
 end
