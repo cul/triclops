@@ -2,10 +2,10 @@
 
 all: &all
   allowed_user_ids:
-    - nw2555
-    - elo2212
+    - abcdef123
+    - ghijkl456
   allowed_user_affils:
-    - CUL_dpts-ldpd
+    - Very_Important_Users
 
 development: *all
 test: *all
