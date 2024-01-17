@@ -6,15 +6,6 @@ GIT
     imogen (0.4.0.pre.rc.1)
       ruby-vips
 
-GIT
-  remote: https://github.com/cul/omniauth-cul.git
-  revision: 807859a104f57b236e33448e35779800a80d9b49
-  branch: main
-  specs:
-    omniauth-cul (0.1.0)
-      devise (>= 4.9)
-      omniauth (>= 2.0)
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -246,6 +237,9 @@ GEM
       hashie (>= 3.4.6)
       rack (>= 2.2.3)
       rack-protection
+    omniauth-cul (0.2.0)
+      devise (>= 4.9)
+      omniauth (>= 2.0)
     orm_adapter (0.5.0)
     parallel (1.24.0)
     parser (3.3.0.2)
@@ -471,7 +465,7 @@ DEPENDENCIES
   mysql2 (~> 0.5.5)
   net-ldap
   omniauth
-  omniauth-cul!
+  omniauth-cul (~> 0.2.0)
   puma (~> 5.2)
   rails (~> 7.1.2)
   rainbow (~> 3.0)
