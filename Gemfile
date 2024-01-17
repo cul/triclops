@@ -39,9 +39,6 @@ gem 'omniauth'
 gem 'omniauth-cul', '~> 0.2.0'
 # gem 'omniauth-cul', git: 'https://github.com/cul/omniauth-cul.git', branch: 'main'
 
-# Fetch ldap details - first name, last name, etc.
-gem 'net-ldap'
-
 # Use Active Model has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 
