@@ -19,7 +19,7 @@ export default function ResourceList() {
 
   return (
     <div>
-      <table>
+      <table className="table table-dark table-bordered table-striped">
         <thead>
           <tr>
             <th>Identifier</th>
