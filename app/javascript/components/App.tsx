@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ResourceList from './resources/ResourceList';
 
 const App = () => {
   const [appVersion, setAppVersion] = useState<string | null>(null);
@@ -15,6 +16,7 @@ const App = () => {
     <div>
       <h1>Triclops</h1>
       <p>{`Version ${appVersion}`}</p>
+      <ResourceList />
     </div>
   );
 };

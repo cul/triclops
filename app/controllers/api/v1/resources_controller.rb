@@ -46,6 +46,11 @@ module Api
         end
       end
 
+      # GET /resources
+      def index
+        render json: Resource.limit(10).order(:id)
+      end
+
       private
 
         def set_resource

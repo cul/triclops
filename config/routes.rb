@@ -25,7 +25,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1, defaults: { format: :json } do
-      resources :resources, only: [:show, :destroy]
+      resources :resources, only: [:show, :destroy, :index]
       # Rather than using the built-in "update" controller action naming convention, we'll point
       # put/patch to a "create_or_replace" controller action to clarify what these routes do.
       [:put, :patch].each do |method|

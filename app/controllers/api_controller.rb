@@ -19,6 +19,7 @@ class ApiController < ActionController::API
     # :forbidden status if the request uses an invalid request token. This method should be
     # used as a before_action callback for any controller actions that require authorization.
     def authenticate_request_token
+      return if user_signed_in?
       authenticate_or_request_with_http_token do |token, _options|
         ActiveSupport::SecurityUtils.secure_compare(TRICLOPS['remote_request_api_key'], token)
       end
