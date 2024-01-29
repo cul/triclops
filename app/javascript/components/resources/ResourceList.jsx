@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import styled from 'styled-components';
 
 export default function ResourceList() {
   const [resources, setResources] = useState([]);
@@ -17,8 +18,12 @@ export default function ResourceList() {
     
   }, []);
 
+  const TableContainer = styled.div`
+    height: 100%;
+  `
+
   return (
-    <div>
+    <TableContainer>
       <table className="table table-dark table-bordered table-striped">
         <thead>
           <tr>
@@ -48,6 +53,6 @@ export default function ResourceList() {
         </tbody>
       </table>
       {/* <ol>{resources.map((resource) => <li key={resource.identifier}>{JSON.stringify(resource)}</li>)}</ol> */}
-    </div>
+    </TableContainer>
   );
 }
