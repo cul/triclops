@@ -5,17 +5,10 @@ import '../stylesheets/triclops_v1.scss'; // app css entry point
 
 const App = () => {
   const [appVersion, setAppVersion] = useState<string | null>(null);
-  const [filterText, setFilterText] = useState('');
 
   useEffect(() => {
     setAppVersion(document.body.getAttribute('data-app-version'));
-  }, [appVersion])
-  
-
-  function handleFilter(text) {
-    setFilterText(text);
-    console.log('filtering by ' + text);
-  }
+  }, [appVersion]) 
 
   if (!appVersion) {
     return 'Loading...';
@@ -25,7 +18,6 @@ const App = () => {
     <div>
       <h1>Triclops</h1>
       <p>{`Version ${appVersion}`}</p>
-      <SearchBar onSearch={handleFilter}/>
       <ResourceList />
     </div>
   );
