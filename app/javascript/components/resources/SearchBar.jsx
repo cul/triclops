@@ -1,18 +1,18 @@
 import React, {useRef} from 'react';
 
-const STATUSES = [1, 2, 3, 4];
+// const STATUSES = [1, 2, 3, 4];
 
-export default function SearchBar({onSearch, onFilter}) {
+export default function SearchBar({filterChoices, onSearch, onFilter}) {
   const identifierInput = useRef();
 
   return (
     <div>
       <p>
         <label>Filter by status: </label>
-        <select name ="status" onChange={(event) => {return onFilter(event.target.value)}}>
+        <select name="status" onChange={(event) => {return onFilter(event.target.value)}}>
           <option key={-1} value={'Any'}>Any</option> 
-          {STATUSES.map((status) => {
-            return <option key={status} value={status + ''}>{status}</option>
+          {filterChoices.map((status) => {
+            return <option key={filterChoices.indexOf(status)} value={status + ''}>{status}</option>
           })}
         </select>
         <label> </label>

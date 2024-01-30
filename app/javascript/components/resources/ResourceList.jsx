@@ -35,6 +35,9 @@ export default function ResourceList() {
     if(status === 'Any') {
       setFilteredResources(resources);
     } else  {
+      if(status === 'undefined') {
+        status = undefined
+      }
       setFilteredResources(resources.filter((resource) => resource.status === status));
     }
   }
@@ -43,10 +46,13 @@ export default function ResourceList() {
     height: 100%;
   `
 
-  console.log(filteredResources);
   return (
     <div>
-      <SearchBar onSearch={handleIdentifierSearch} onFilter={handleStatusFilter}/>
+      <SearchBar 
+        filterChoices={[...new Set(resources.map((resource) => {return resource.status}))]}
+        onSearch={handleIdentifierSearch}
+        onFilter={handleStatusFilter}
+      />
       <TableContainer>
         <table className="table table-dark table-bordered table-striped">
           <thead>
@@ -74,7 +80,6 @@ export default function ResourceList() {
                 <td>{resource.error_message}</td>
               </tr>
             )}
-            {console.log(filteredResources)}
           </tbody>
         </table>
         {/* <ol>{resources.map((resource) => <li key={resource.identifier}>{JSON.stringify(resource)}</li>)}</ol> */}
