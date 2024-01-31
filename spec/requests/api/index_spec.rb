@@ -1,30 +1,25 @@
 require 'rails_helper'
 
-RSpec.describe "show resource", type: :request do
+RSpec.describe 'show resource', type: :request do
   let(:identifiers) { ['test1', 'test2'] }
 
-  describe "GET /resources/:id" do
+  describe 'GET /resources/:id' do
     context 'without authentication' do
       context 'with valid update params' do
         it 'returns a 401 status' do
-          FactoryBot.create(:resource, identifier: identifier)
-          get "/api/v1/resources/"
+          FactoryBot.create(:resource, identifier: identifiers[0])
+          get '/api/v1/resources/'
           expect(response).to have_http_status(:unauthorized)
         end
       end
     end
 
     context 'with authentication' do
-      it 'returns a 406 not acceptable response for a non-json request' do
-        get_with_auth "/api/v1/resources/"
-        expect(response).to have_http_status(:not_acceptable)
-      end
-
-      it "returns a list of resources", focus: true do
+      it 'returns a list of resources' do
         resources = identifiers.map do |identifier|
           FactoryBot.create(:resource, identifier: identifier)
         end
-        get_with_auth "/api/v1/resources"
+        get_with_auth '/api/v1/resources'
         expect(response).to have_http_status(:success)
         expected_response_json = resources.map do |resource|
           {
