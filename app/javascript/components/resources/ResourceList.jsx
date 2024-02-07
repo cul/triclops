@@ -17,8 +17,10 @@ export default function ResourceList() {
           }
         });
       const data = await response.json();
-      setResources(data.concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data));
-      // setResources(data);
+      // setResources(data.concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data));
+      // setFilteredResources(data.concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data));
+      console.log(data[0])
+      setResources(data);
       setFilteredResources(data);
     })();
   }, []);
@@ -73,8 +75,8 @@ export default function ResourceList() {
       <button onClick={prevPage}>prev</button>
       <button onClick={nextPage}>next</button>
       <TableContainer>
-        <table className="table table-dark table-bordered table-striped">
-          <thead>
+        <table className="table table-primary table-striped">
+          <thead className='thead-dark'>
             <tr>
               <th>Identifier</th>
               <th>Source URI</th>
@@ -86,7 +88,7 @@ export default function ResourceList() {
               <th>Error Message</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className=''>
             {filteredResources.slice((pageNumber - 1) * 50, pageNumber * 50).map((resource) => 
               <tr key={resource.identifier}>
                 <td>{resource.identifier}</td>
