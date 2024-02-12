@@ -5,7 +5,6 @@ require 'resque/server'
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
   root 'pages#home'
-  get 'admin/resources', to: 'pages#home'
 
   devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
   devise_scope :user do
@@ -22,6 +21,7 @@ Rails.application.routes.draw do
 
   constraints resque_web_constraint do
     mount Resque::Server.new, at: '/resque'
+    get 'admin/resources', to: 'pages#home'
   end
 
   namespace :api do
