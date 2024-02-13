@@ -3,34 +3,31 @@ import styled from 'styled-components';
 import SearchBar from './SearchBar';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
+const filterChoices = ['Pending', 'Processing', 'Failure', 'Ready'];
+
 export default function ResourceList() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [resources, setResources] = useState([]);
   const [filteredResources, setFilteredResources] = useState([]);
-  const [pageState, setPageState] = useState({ pageNumber: 1, identifier: '', status: 'Any'});
+  const [pageState, setPageState] = useState({ identifier: '', status: 'Any', pageNumber: 1});
 
   useEffect(() => {
+    console.log(searchParams.identifier)
+    let fetch_url ='/api/v1/resources?'
+    if (pageState.identifier) {fetch_url += `identifier=${pageState.identifier}&`;} 
+    if (pageState.status) {fetch_url += `status=${pageState.status}&`;} 
+    fetch_url += `page=${pageState.pageNumber ? pageState.pageNumber : 1}`;
+    console.log(fetch_url);
     (async () => {
-      const response = await fetch(
-        '/api/v1/resources',
-        {
-          headers: {
-            'Authorization': 'Token changethis'
-          }
-        });
+      const response = await fetch(fetch_url);
       const data = await response.json();
       // setResources(data.concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data));
       // setFilteredResources(data.concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data));
-      setResources(data);
-      
-      let filteredData = data;
-      if (pageState.identifier) { filteredData = filteredData.filter((resource) => resource.identifier === pageState.identifier); } 
-      if (pageState.status === '@undefined') { filteredData = filteredData.filter((resource) => resource.status === undefined); }
-        else if (pageState.status && pageState.status != 'Any') { filteredData = filteredData.filter((resource) => resource.status === pageState.status); }
-      setFilteredResources(filteredData)
+      console.log('data:');
+      console.log(data);
+      setFilteredResources(data);
     })();
-  }, []);
+  }, [searchParams]);
 
   function setURL(identifier, status, page) {
     let url = '?';
@@ -41,8 +38,6 @@ export default function ResourceList() {
   }
 
   function handleIdentifierSearch(identifier) {
-    console.log('Looking for id ' + identifier);
-  
     setURL(identifier, pageState.status, 1);
   }
 
@@ -51,18 +46,17 @@ export default function ResourceList() {
       status = '@undefined'
     }
     setURL(pageState.identifier, status, 1);
-    console.log('Filtering by status ' + status)
   }
 
   function nextPage() {
-    if(pageNumber * 50 < filteredResources.length) {
-      setPageNumber(pageNumber + 1);
+    if(filteredResources.length == 50) {
+      setURL(pageState.identifier, pageState.status, pageState.pageNumber + 1);
     }
   }
   
   function prevPage() {
-    if(pageNumber > 1) {
-      setPageNumber(pageNumber - 1);
+    if(pageState.pageNumber > 1) {
+      setURL(pageState.identifier, pageState.status, pageState.pageNumber - 1);
     }
   }
 
@@ -76,8 +70,6 @@ export default function ResourceList() {
 
   const newPageState = { ...pageState }
 
-  console.log(filteredResources);
-
   if (
     (queryIdentifier && (queryIdentifier != pageState.identifier)) ||
     (queryStatus && (queryStatus != pageState.status)) ||
@@ -86,16 +78,16 @@ export default function ResourceList() {
 
     if (queryIdentifier && (queryIdentifier != pageState.identifier)) { 
       // console.log("changing identifier from " + pageState.identifier + " to " + queryIdentifier);
-      setFilteredResources(resources.filter((resource) => resource.identifier === queryIdentifier)); 
+      // setFilteredResources(resources.filter((resource) => resource.identifier === queryIdentifier)); 
       newPageState.identifier = queryIdentifier;
     }
     if (queryStatus && (queryStatus != pageState.status)) {
       // console.log("changing status from " + pageState.status + " to " + queryStatus);
-      setFilteredResources(filteredResources.filter((resource) => resource.status === queryStatus)); 
+      // setFilteredResources(filteredResources.filter((resource) => resource.status === queryStatus)); 
       newPageState.status = queryStatus;
     }
     if (queryPage && (queryPage != pageState.pageNumber) && queryPage * 50 < filteredResources.length) { 
-      console.log("changing page number from " + pageState.pageNumber + " to " + queryPage);
+      // console.log("changing page number from " + pageState.pageNumber + " to " + queryPage);
       newPageState.pageNumber = queryPage;
     } else if (newPageState.identifier != pageState.identifier || newPageState.status != pageState.status) {
       // Move to page 1 if a filter param was updated and the page isn't specified
@@ -112,7 +104,9 @@ export default function ResourceList() {
   return (
     <div>
       <SearchBar 
-        filterChoices={[...new Set(resources.map((resource) => {return resource.status}))]}
+        filterChoices={filterChoices}
+        filterDefault={pageState.status}
+        searchDefault={pageState.identifier}
         onSearch={handleIdentifierSearch}
         onFilter={handleStatusFilter}
       />

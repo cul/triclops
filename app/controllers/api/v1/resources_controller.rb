@@ -48,7 +48,24 @@ module Api
 
       # GET /resources
       def index
-        render json: Resource.limit(10).order(:id)
+        per_page = 50
+        status = params[:status]
+        page = Integer(params[:page])
+        identifier = params[:identifier]
+
+        resources = Resource
+        identifier && resources = resources.where(identifier: identifier)
+        status && status != 'Any' && resources = resources.where(status: status)
+        resources = resources.limit(per_page)
+        status && status != 'Any' && resources = resources.order(status)
+        render json:
+          resources
+          # Resource
+          #         .where(identifier: identifier)
+          #         # .find_by(status: status)
+          #         .limit(per_page)
+          #         .offset((page - 1) * per_page).order(status)
+
       end
 
       private
@@ -59,6 +76,10 @@ module Api
 
         def create_params
           params.require(:resource).permit(:source_uri, :featured_region, :pcdm_type)
+        end
+
+        def index_params
+          params.require(:resource).permit(:status, :page, :pcdm_type)
         end
     end
   end
