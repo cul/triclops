@@ -21,8 +21,7 @@ export default function ResourceList() {
     (async () => {
       const response = await fetch(fetch_url);
       const data = await response.json();
-      // setResources(data.concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data));
-      // setFilteredResources(data.concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data));
+      setFilteredResources(data.concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data));
       console.log('data:');
       console.log(data);
       setFilteredResources(data);
@@ -125,6 +124,8 @@ export default function ResourceList() {
               <th>PCDM Type</th>
               <th>Status</th>
               <th>Error Message</th>
+              <th>Created At</th>
+              <th>Updated At</th>
             </tr>
           </thead>
           <tbody className=''>
@@ -138,6 +139,8 @@ export default function ResourceList() {
                 <td>{resource.pcdm_type}</td>
                 <td>{resource.status}</td>
                 <td>{resource.error_message}</td>
+                <td>{resource.created_at}</td>
+                <td>{resource.updated_at}</td>
               </tr>
             )}
           </tbody>

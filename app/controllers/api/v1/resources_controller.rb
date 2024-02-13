@@ -56,15 +56,10 @@ module Api
         resources = Resource
         identifier && resources = resources.where(identifier: identifier)
         status && status != 'Any' && resources = resources.where(status: status)
-        resources = resources.limit(per_page)
+        resources = resources.limit(per_page).offset((page - 1) * per_page)
         status && status != 'Any' && resources = resources.order(status)
         render json:
           resources
-          # Resource
-          #         .where(identifier: identifier)
-          #         # .find_by(status: status)
-          #         .limit(per_page)
-          #         .offset((page - 1) * per_page).order(status)
 
       end
 

@@ -17,7 +17,7 @@ export default function SearchBar({filterChoices, filterDefault, searchDefault, 
         </select>
         <label> </label>
         <label>Search for Identifier: </label>
-        <input ref={identifierInput} value={searchDefault}/>
+        <input ref={identifierInput} defaultValue={searchDefault}/>
         <label> </label>
         <button onClick={() => onSearch(identifierInput.current.value)}>search</button>
       </p>
