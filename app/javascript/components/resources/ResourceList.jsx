@@ -17,17 +17,9 @@ export default function ResourceList() {
     if (pageState.identifier) {fetch_url += `identifier=${pageState.identifier}&`;} 
     if (pageState.status) {fetch_url += `status=${pageState.status}&`;} 
     fetch_url += `page=${pageState.pageNumber ? pageState.pageNumber : 1}`;
-    console.log(fetch_url);
     (async () => {
       const response = await fetch(fetch_url);
       const data = await response.json();
-      // setFilteredResources(data.concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data));
-      console.log('data:');
-      console.log(data);
-      data.forEach(entry => {
-        console.log(entry);
-      })
-      console.log();
       setFilteredResources(data);
     })();
   }, [searchParams]);

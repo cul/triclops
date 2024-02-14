@@ -52,18 +52,17 @@ module Api
 
         per_page = 50
         status = statuses.include?(params[:status].downcase) ? statuses.index(params[:status].downcase) : params[:status]
+        status = status.is_a?(String) ? status.downcase : status
         page = Integer(params[:page])
         identifier = params[:identifier]
 
         resources = Resource
         identifier && resources = resources.where(identifier: identifier)
-        status && status.downcase != 'any' && resources = resources.where(status: status)
+        status && status != 'any' && resources = resources.where(status: status)
         resources = resources.limit(per_page).offset((page - 1) * per_page)
-        status && status.downcase != 'any' && resources = resources.order(status)
-        puts resources[0].inspect
+        status && status != 'any' && resources = resources.order(:status)
         render json:
-          resources
-
+          resources.map(&:attributes)
       end
 
       private
