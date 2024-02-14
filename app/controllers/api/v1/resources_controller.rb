@@ -48,16 +48,19 @@ module Api
 
       # GET /resources
       def index
+        statuses = ['pending', 'processing', 'failure', 'ready']
+
         per_page = 50
-        status = params[:status]
+        status = statuses.include?(params[:status].downcase) ? statuses.index(params[:status].downcase) : params[:status]
         page = Integer(params[:page])
         identifier = params[:identifier]
 
         resources = Resource
         identifier && resources = resources.where(identifier: identifier)
-        status && status != 'Any' && resources = resources.where(status: status)
+        status && status.downcase != 'any' && resources = resources.where(status: status)
         resources = resources.limit(per_page).offset((page - 1) * per_page)
-        status && status != 'Any' && resources = resources.order(status)
+        status && status.downcase != 'any' && resources = resources.order(status)
+        puts resources[0].inspect
         render json:
           resources
 

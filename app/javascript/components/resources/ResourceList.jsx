@@ -21,9 +21,13 @@ export default function ResourceList() {
     (async () => {
       const response = await fetch(fetch_url);
       const data = await response.json();
-      setFilteredResources(data.concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data));
+      // setFilteredResources(data.concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data).concat(data));
       console.log('data:');
       console.log(data);
+      data.forEach(entry => {
+        console.log(entry);
+      })
+      console.log();
       setFilteredResources(data);
     })();
   }, [searchParams]);
