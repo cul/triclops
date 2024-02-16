@@ -51,10 +51,10 @@ module Api
         statuses = ['pending', 'processing', 'failure', 'ready']
 
         per_page = 50
-        status = statuses.include?(params[:status].downcase) ? statuses.index(params[:status].downcase) : params[:status]
+        status = statuses.include?(index_params[:status].downcase) ? statuses.index(index_params[:status].downcase) : index_params[:status]
         status = status.is_a?(String) ? status.downcase : status
-        page = Integer(params[:page])
-        identifier = params[:identifier]
+        page = Integer(index_params[:page])
+        identifier = index_params[:identifier]
 
         resources = Resource
         identifier && resources = resources.where(identifier: identifier)
@@ -76,7 +76,7 @@ module Api
         end
 
         def index_params
-          params.require(:resource).permit(:status, :page, :pcdm_type)
+          params.permit(:status, :page, :identifier, :format)
         end
     end
   end
