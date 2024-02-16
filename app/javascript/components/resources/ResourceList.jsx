@@ -13,7 +13,6 @@ export default function ResourceList() {
   const [lastPage, setLastPage] = useState(false);
 
   useEffect(() => {
-    console.log(searchParams.identifier)
     let fetch_url ='/api/v1/resources?'
     if (pageState.identifier) {fetch_url += `identifier=${pageState.identifier}&`;} 
     if (pageState.status) {fetch_url += `status=${pageState.status}&`;} 
@@ -31,10 +30,10 @@ export default function ResourceList() {
 
   function setURL(identifier, status, page, per_page) {
     let url = '?';
-    if (identifier) { url = url + 'identifier=' + identifier + '&'};
-    if (status) { url = url + 'status=' + status + '&'};
-    if (page) { url = url + 'page=' + page + '&'};
-    if (per_page) { url = url + 'per_page=' + per_page};
+    url += 'identifier=' + identifier + '&';
+    url += 'status=' + status + '&';
+    url += 'page=' + page + '&';
+    url +='per_page=' + per_page;
     navigate(url);
   }
 
@@ -74,47 +73,37 @@ export default function ResourceList() {
   const queryPage = searchParams.get('page');
   const queryPerPage = searchParams.get('per_page');
 
-  console.log(queryPage);
-
   const newPageState = { ...pageState }
 
   if (
-    (queryIdentifier && (queryIdentifier != pageState.identifier)) ||
-    (queryStatus && (queryStatus != pageState.status)) ||
-    (queryPage && (parseInt(queryPage) != pageState.pageNumber)) ||
-    (queryPerPage && (queryPerPage != pageState.per_page))
+    (queryIdentifier != pageState.identifier) ||
+    (queryStatus != pageState.status) ||
+    (parseInt(queryPage) != pageState.pageNumber) ||
+    (queryPerPage != pageState.per_page)
   ) {
 
-    if (queryIdentifier && (queryIdentifier != pageState.identifier)) { 
+    if (queryIdentifier != pageState.identifier) { 
       // console.log("changing identifier from " + pageState.identifier + " to " + queryIdentifier);
       // setFilteredResources(resources.filter((resource) => resource.identifier === queryIdentifier)); 
       newPageState.identifier = queryIdentifier;
     }
-    if (queryStatus && (queryStatus != pageState.status)) {
+    if (queryStatus != pageState.status) {
       // console.log("changing status from " + pageState.status + " to " + queryStatus);
       // setFilteredResources(filteredResources.filter((resource) => resource.status === queryStatus)); 
       newPageState.status = queryStatus;
     }
-    if (queryPage && (queryPage != pageState.pageNumber)) { 
-      console.log("changing page number from " + pageState.pageNumber + " to " + queryPage);
+    if (queryPage != pageState.pageNumber) { 
+      // console.log("changing page number from " + pageState.pageNumber + " to " + queryPage);
       newPageState.pageNumber = queryPage;
     } else if (newPageState.identifier != pageState.identifier || newPageState.status != pageState.status) {
       // Move to page 1 if a filter param was updated and the page isn't specified
       newPageState.pageNumber = 1;
     }
-    if (queryPerPage && (queryPerPage != pageState.per_page)) {
+    if (queryPerPage != pageState.per_page) {
       newPageState.per_page = queryPerPage;
     }
-
-    
-
-    console.log(pageState);
-    console.log(newPageState);
-    console.log(newPageState.queryPage);
     setPageState(newPageState);
   }
-
-  console.log(filteredResources);
 
   return (
     <div>
