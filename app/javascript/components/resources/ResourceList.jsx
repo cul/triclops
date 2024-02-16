@@ -39,7 +39,7 @@ export default function ResourceList() {
   }
 
   function handleIdentifierSearch(identifier) {
-    setURL(identifier, pageState.status, 1);
+    setURL(identifier, pageState.status, 1, pageState.per_page);
   }
 
   function handleStatusFilter(status) {
@@ -47,6 +47,10 @@ export default function ResourceList() {
       status = '@undefined'
     }
     setURL(pageState.identifier, status, 1, pageState.per_page);
+  }
+
+  function handlePerPageSet(perPage) {
+    setURL(pageState.identifier, pageState.status, 1, perPage);
   }
 
   function nextPage() {
@@ -118,13 +122,15 @@ export default function ResourceList() {
         filterChoices={filterChoices}
         filterDefault={pageState.status}
         searchDefault={pageState.identifier}
+        perPageDefault={pageState.per_page}
         onSearch={handleIdentifierSearch}
         onFilter={handleStatusFilter}
+        onPerPageSet={handlePerPageSet}
       />
-      <label>{((pageState.pageNumber - 1) * pageState.per_page + 1) + ' - ' + (Math.min(pageState.pageNumber * pageState.per_page, filteredResources.length)) + ' of ' + filteredResources.length}</label>
+      <label className='ps-3 mt-5'>{((pageState.pageNumber - 1) * pageState.per_page + 1) + ' - ' + ((pageState.pageNumber - 1) * pageState.per_page + filteredResources.length) + ' of ' + filteredResources.length}</label>
       <button onClick={prevPage}>prev</button>
       <button onClick={nextPage}>next</button>
-      <TableContainer>
+      <TableContainer className='mt-3'>
         <table className="table table-primary table-striped">
           <thead className='thead-dark'>
             <tr>
@@ -159,7 +165,7 @@ export default function ResourceList() {
         </table>
         {/* <ol>{resources.map((resource) => <li key={resource.identifier}>{JSON.stringify(resource)}</li>)}</ol> */}
       </TableContainer>
-      <label>{((pageState.pageNumber - 1) * pageState.per_page + 1) + ' - ' + (Math.min(pageState.pageNumber * pageState.per_page, filteredResources.length)) + ' of ' + filteredResources.length}</label>
+      <label className='ps-3 mt-1'>{((pageState.pageNumber - 1) * pageState.per_page + 1) + ' - ' + ((pageState.pageNumber - 1) * pageState.per_page + filteredResources.length) + ' of ' + filteredResources.length}</label>
       <button onClick={prevPage}>prev</button>
       <button onClick={nextPage}>next</button>
     </div>
