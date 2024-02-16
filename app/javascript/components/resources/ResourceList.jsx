@@ -125,7 +125,7 @@ export default function ResourceList() {
             </tr>
           </thead>
           <tbody className=''>
-            {filteredResources.slice((pageState.pageNumber - 1) * 50, pageState.pageNumber * 50).map((resource) => 
+            {filteredResources.map((resource) => 
               <tr key={resource.identifier}>
                 <td>{resource.identifier}</td>
                 <td>{resource.source_uri}</td>

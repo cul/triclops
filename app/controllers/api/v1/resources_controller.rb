@@ -51,9 +51,9 @@ module Api
         statuses = ['pending', 'processing', 'failure', 'ready']
 
         per_page = 50
-        status = statuses.include?(index_params[:status].downcase) ? statuses.index(index_params[:status].downcase) : index_params[:status]
-        status = status.is_a?(String) ? status.downcase : status
-        page = Integer(index_params[:page])
+        param_status = index_params[:status].is_a?(String) ? index_params[:status].downcase : index_params[:status]
+        status = statuses.include?(param_status) ? statuses.index(param_status) : param_status
+        page = index_params[:page] ? Integer(index_params[:page]) : 1
         identifier = index_params[:identifier]
 
         resources = Resource
