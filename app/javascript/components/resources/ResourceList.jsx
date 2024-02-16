@@ -9,7 +9,8 @@ export default function ResourceList() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [filteredResources, setFilteredResources] = useState([]);
-  const [pageState, setPageState] = useState({ identifier: '', status: 'Any', pageNumber: 1, per_page: 50});
+  const [pageState, setPageState] = useState({ identifier: '', status: 'Any', pageNumber: 1, per_page: 50 });
+  const [lastPage, setLastPage] = useState(false);
 
   useEffect(() => {
     console.log(searchParams.identifier)
@@ -22,15 +23,18 @@ export default function ResourceList() {
     (async () => {
       const response = await fetch(fetch_url);
       const data = await response.json();
-      setFilteredResources(data);
-    })();
+
+      setFilteredResources(data['resources']);
+      setLastPage(data['last_page'])
+    })()
   }, [searchParams]);
 
-  function setURL(identifier, status, page) {
+  function setURL(identifier, status, page, per_page) {
     let url = '?';
     if (identifier) { url = url + 'identifier=' + identifier + '&'};
     if (status) { url = url + 'status=' + status + '&'};
-    if (page) { url = url + 'page=' + page};
+    if (page) { url = url + 'page=' + page + '&'};
+    if (per_page) { url = url + 'per_page=' + per_page};
     navigate(url);
   }
 
@@ -42,18 +46,18 @@ export default function ResourceList() {
     if(status === 'undefined') {
       status = '@undefined'
     }
-    setURL(pageState.identifier, status, 1);
+    setURL(pageState.identifier, status, 1, pageState.per_page);
   }
 
   function nextPage() {
-    if(filteredResources.length == pageState.per_page) {
-      setURL(pageState.identifier, pageState.status, pageState.pageNumber + 1);
+    if(!lastPage) {
+      setURL(pageState.identifier, pageState.status, parseInt(pageState.pageNumber) + 1, pageState.per_page);
     }
   }
   
   function prevPage() {
-    if(pageState.pageNumber > 1) {
-      setURL(pageState.identifier, pageState.status, pageState.pageNumber - 1);
+    if(parseInt(pageState.pageNumber) > 1) {
+      setURL(pageState.identifier, pageState.status, parseInt(pageState.pageNumber) - 1, pageState.per_page);
     }
   }
 

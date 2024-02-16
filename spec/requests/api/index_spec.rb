@@ -21,8 +21,9 @@ RSpec.describe 'show resource', type: :request do
         end
         get_with_auth '/api/v1/resources'
         expect(response).to have_http_status(:success)
-        expected_response_json = resources.map do |resource|
-          {
+        expected_response_json =
+        {
+          'resources' => resources.map do |resource| { 
             'accessed_at' => nil,
             'created_at' => resource.created_at.to_time.iso8601(3),
             'error_message' => nil,
@@ -36,7 +37,9 @@ RSpec.describe 'show resource', type: :request do
             'updated_at' => resource.updated_at.to_time.iso8601(3),
             'width' => resource.width
           }
-        end
+          end,
+          'last_page' => true
+        }
         expect(JSON.parse(response.body)).to eq(expected_response_json)
       end
 
@@ -49,19 +52,23 @@ RSpec.describe 'show resource', type: :request do
         expect(response).to have_http_status(:success)
         resource = resources[1]
         expected_response_json =
-          [{ 'accessed_at' => nil,
-             'created_at' => resource.created_at.to_time.iso8601(3),
-             'error_message' => nil,
-             'featured_region' => resource.featured_region,
-             'height' => resource.height,
-             'id' => resources.index(resource) + 1,
-             'identifier' => resource.identifier,
-             'pcdm_type' => 'Image',
-             'source_uri' => resource.source_uri,
-             'status' => 'pending',
-             'updated_at' => resource.updated_at.to_time.iso8601(3),
-             'width' => resource.width
-          }]
+          {
+            'resources' => [{ 
+              'accessed_at' => nil,
+              'created_at' => resource.created_at.to_time.iso8601(3),
+              'error_message' => nil,
+              'featured_region' => resource.featured_region,
+              'height' => resource.height,
+              'id' => resources.index(resource) + 1,
+              'identifier' => resource.identifier,
+              'pcdm_type' => 'Image',
+              'source_uri' => resource.source_uri,
+              'status' => 'pending',
+              'updated_at' => resource.updated_at.to_time.iso8601(3),
+              'width' => resource.width
+            }],
+            'last_page' => true
+          }
         expect(JSON.parse(response.body)).to eq(expected_response_json)
       end
 
@@ -75,19 +82,23 @@ RSpec.describe 'show resource', type: :request do
         expect(response).to have_http_status(:success)
         resource = resources[1]
         expected_response_json =
-          [{ 'accessed_at' => nil,
-             'created_at' => resource.created_at.to_time.iso8601(3),
-             'error_message' => nil,
-             'featured_region' => resource.featured_region,
-             'height' => resource.height,
-             'id' => resources.index(resource) + 1,
-             'identifier' => resource.identifier,
-             'pcdm_type' => 'Image',
-             'source_uri' => resource.source_uri,
-             'status' => 'ready',
-             'updated_at' => resource.updated_at.to_time.iso8601(3),
-             'width' => resource.width
-          }]
+          {
+            'resources' => [{ 
+              'accessed_at' => nil,
+              'created_at' => resource.created_at.to_time.iso8601(3),
+              'error_message' => nil,
+              'featured_region' => resource.featured_region,
+              'height' => resource.height,
+              'id' => resources.index(resource) + 1,
+              'identifier' => resource.identifier,
+              'pcdm_type' => 'Image',
+              'source_uri' => resource.source_uri,
+              'status' => 'ready',
+              'updated_at' => resource.updated_at.to_time.iso8601(3),
+              'width' => resource.width
+            }],
+            'last_page' => true
+          }
         expect(JSON.parse(response.body)).to eq(expected_response_json)
       end
 
@@ -100,19 +111,23 @@ RSpec.describe 'show resource', type: :request do
         expect(response).to have_http_status(:success)
         resource = resources[1]
         expected_response_json =
-          [{ 'accessed_at' => nil,
-             'created_at' => resource.created_at.to_time.iso8601(3),
-             'error_message' => nil,
-             'featured_region' => resource.featured_region,
-             'height' => resource.height,
-             'id' => resources.index(resource) + 1,
-             'identifier' => resource.identifier,
-             'pcdm_type' => 'Image',
-             'source_uri' => resource.source_uri,
-             'status' => 'pending',
-             'updated_at' => resource.updated_at.to_time.iso8601(3),
-             'width' => resource.width
-          }]
+          {
+            'resources' => [{
+              'accessed_at' => nil,
+              'created_at' => resource.created_at.to_time.iso8601(3),
+              'error_message' => nil,
+              'featured_region' => resource.featured_region,
+              'height' => resource.height,
+              'id' => resources.index(resource) + 1,
+              'identifier' => resource.identifier,
+              'pcdm_type' => 'Image',
+              'source_uri' => resource.source_uri,
+              'status' => 'pending',
+              'updated_at' => resource.updated_at.to_time.iso8601(3),
+              'width' => resource.width
+            }],
+            'last_page' => true
+          }
         expect(JSON.parse(response.body)).to eq(expected_response_json)
       end
 
