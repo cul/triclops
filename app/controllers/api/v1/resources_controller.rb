@@ -50,7 +50,7 @@ module Api
       def index
         statuses = ['pending', 'processing', 'failure', 'ready']
 
-        per_page = 50
+        per_page = index_params[:per_page] ? Integer(index_params[:per_page]) : 50
         param_status = index_params[:status].is_a?(String) ? index_params[:status].downcase : index_params[:status]
         status = statuses.include?(param_status) ? statuses.index(param_status) : param_status
         page = index_params[:page] ? Integer(index_params[:page]) : 1
@@ -76,7 +76,7 @@ module Api
         end
 
         def index_params
-          params.permit(:status, :page, :identifier, :format)
+          params.permit(:status, :page, :identifier, :format, :per_page)
         end
     end
   end

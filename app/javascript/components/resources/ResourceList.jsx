@@ -9,14 +9,16 @@ export default function ResourceList() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [filteredResources, setFilteredResources] = useState([]);
-  const [pageState, setPageState] = useState({ identifier: '', status: 'Any', pageNumber: 1});
+  const [pageState, setPageState] = useState({ identifier: '', status: 'Any', pageNumber: 1, per_page: 50});
 
   useEffect(() => {
     console.log(searchParams.identifier)
     let fetch_url ='/api/v1/resources?'
     if (pageState.identifier) {fetch_url += `identifier=${pageState.identifier}&`;} 
     if (pageState.status) {fetch_url += `status=${pageState.status}&`;} 
-    fetch_url += `page=${pageState.pageNumber ? pageState.pageNumber : 1}`;
+    fetch_url += `page=${pageState.pageNumber ? pageState.pageNumber : 1}&`;
+    fetch_url += `per_page=${pageState.per_page}`;
+    console.log(fetch_url);
     (async () => {
       const response = await fetch(fetch_url);
       const data = await response.json();
@@ -44,7 +46,7 @@ export default function ResourceList() {
   }
 
   function nextPage() {
-    if(filteredResources.length == 50) {
+    if(filteredResources.length == pageState.per_page) {
       setURL(pageState.identifier, pageState.status, pageState.pageNumber + 1);
     }
   }
@@ -62,13 +64,17 @@ export default function ResourceList() {
   const queryIdentifier = searchParams.get('identifier');
   const queryStatus = searchParams.get('status');
   const queryPage = searchParams.get('page');
+  const queryPerPage = searchParams.get('per_page');
+
+  console.log(queryPage);
 
   const newPageState = { ...pageState }
 
   if (
     (queryIdentifier && (queryIdentifier != pageState.identifier)) ||
     (queryStatus && (queryStatus != pageState.status)) ||
-    (queryPage && (parseInt(queryPage) != pageState.pageNumber) && (queryPage - 1) * 50 < filteredResources.length)
+    (queryPage && (parseInt(queryPage) != pageState.pageNumber)) ||
+    (queryPerPage && (queryPerPage != pageState.per_page))
   ) {
 
     if (queryIdentifier && (queryIdentifier != pageState.identifier)) { 
@@ -81,16 +87,22 @@ export default function ResourceList() {
       // setFilteredResources(filteredResources.filter((resource) => resource.status === queryStatus)); 
       newPageState.status = queryStatus;
     }
-    if (queryPage && (queryPage != pageState.pageNumber) && queryPage * 50 < filteredResources.length) { 
-      // console.log("changing page number from " + pageState.pageNumber + " to " + queryPage);
+    if (queryPage && (queryPage != pageState.pageNumber)) { 
+      console.log("changing page number from " + pageState.pageNumber + " to " + queryPage);
       newPageState.pageNumber = queryPage;
     } else if (newPageState.identifier != pageState.identifier || newPageState.status != pageState.status) {
       // Move to page 1 if a filter param was updated and the page isn't specified
       newPageState.pageNumber = 1;
     }
+    if (queryPerPage && (queryPerPage != pageState.per_page)) {
+      newPageState.per_page = queryPerPage;
+    }
+
+    
 
     console.log(pageState);
     console.log(newPageState);
+    console.log(newPageState.queryPage);
     setPageState(newPageState);
   }
 
@@ -105,7 +117,7 @@ export default function ResourceList() {
         onSearch={handleIdentifierSearch}
         onFilter={handleStatusFilter}
       />
-      <label>{((pageState.pageNumber - 1) * 50 + 1) + ' - ' + (Math.min(pageState.pageNumber * 50, filteredResources.length)) + ' of ' + filteredResources.length}</label>
+      <label>{((pageState.pageNumber - 1) * pageState.per_page + 1) + ' - ' + (Math.min(pageState.pageNumber * pageState.per_page, filteredResources.length)) + ' of ' + filteredResources.length}</label>
       <button onClick={prevPage}>prev</button>
       <button onClick={nextPage}>next</button>
       <TableContainer>
@@ -143,7 +155,7 @@ export default function ResourceList() {
         </table>
         {/* <ol>{resources.map((resource) => <li key={resource.identifier}>{JSON.stringify(resource)}</li>)}</ol> */}
       </TableContainer>
-      <label>{((pageState.pageNumber - 1) * 50 + 1) + ' - ' + (Math.min(pageState.pageNumber * 50, filteredResources.length)) + ' of ' + filteredResources.length}</label>
+      <label>{((pageState.pageNumber - 1) * pageState.per_page + 1) + ' - ' + (Math.min(pageState.pageNumber * pageState.per_page, filteredResources.length)) + ' of ' + filteredResources.length}</label>
       <button onClick={prevPage}>prev</button>
       <button onClick={nextPage}>next</button>
     </div>
