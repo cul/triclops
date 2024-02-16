@@ -55,7 +55,6 @@ module Api
         status = statuses.include?(param_status) ? statuses.index(param_status) : param_status
         page = index_params[:page] ? Integer(index_params[:page]) : 1
         identifier = index_params[:identifier]
-        last_page = false
 
         resources = Resource
         identifier && resources = resources.where(identifier: identifier)
@@ -64,11 +63,8 @@ module Api
         resources = resources.limit(per_page).offset((page - 1) * per_page)
         status && status != 'any' && resources = resources.order(:status)
 
-        puts last_page
         render json:
-          { resources: resources.map(&:attributes),
-            last_page: last_page
-          }
+          { resources: resources.map(&:attributes), last_page: last_page }
       end
 
       private
