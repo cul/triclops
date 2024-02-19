@@ -21,11 +21,12 @@ Rails.application.routes.draw do
 
   constraints resque_web_constraint do
     mount Resque::Server.new, at: '/resque'
+    get 'admin/resources', to: 'pages#home'
   end
 
   namespace :api do
     namespace :v1, defaults: { format: :json } do
-      resources :resources, only: [:show, :destroy]
+      resources :resources, only: [:show, :destroy, :index]
       # Rather than using the built-in "update" controller action naming convention, we'll point
       # put/patch to a "create_or_replace" controller action to clarify what these routes do.
       [:put, :patch].each do |method|

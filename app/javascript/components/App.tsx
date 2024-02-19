@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import '../stylesheets/triclops_v1.scss'; // app css entry point
+import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import HomePage from '../pages/Home';
+import ResourcesPage from '../pages/Resources';
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    children: [
+      { index: true, element: <HomePage /> },
+      { path: '/admin/resources', element: <ResourcesPage /> }
+    ]
+  }
+])
 
 const App = () => {
-  const [appVersion, setAppVersion] = useState<string | null>(null);
-
-  useEffect(() => {
-    setAppVersion(document.body.getAttribute('data-app-version'));
-  }, [appVersion])
-
-  if (!appVersion) {
-    return 'Loading...';
-  }
-
-  return (
-    <div>
-      <h1>Triclops</h1>
-      <p>{`Version ${appVersion}`}</p>
-    </div>
-  );
+  return <RouterProvider router={router} />;
 };
 
 export default App;
