@@ -9,7 +9,7 @@ export default function ResourceList() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [filteredResources, setFilteredResources] = useState([]);
-  const [pageState, setPageState] = useState({ identifier: '', status: 'Any', pageNumber: 1, per_page: 50 });
+  const [pageState, setPageState] = useState({ identifier: 'Any', status: 'Any', pageNumber: 1, per_page: 50 });
   const [lastPage, setLastPage] = useState(true);
 
    useEffect(() => {
