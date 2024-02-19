@@ -10,15 +10,14 @@ export default function ResourceList() {
   const navigate = useNavigate();
   const [filteredResources, setFilteredResources] = useState([]);
   const [pageState, setPageState] = useState({ identifier: '', status: 'Any', pageNumber: 1, per_page: 50 });
-  const [lastPage, setLastPage] = useState(false);
+  const [lastPage, setLastPage] = useState(true);
 
-  useEffect(() => {
+   useEffect(() => {
     let fetch_url ='/api/v1/resources?'
     if (pageState.identifier) {fetch_url += `identifier=${pageState.identifier}&`;} 
     if (pageState.status) {fetch_url += `status=${pageState.status}&`;} 
     fetch_url += `page=${pageState.pageNumber ? pageState.pageNumber : 1}&`;
     fetch_url += `per_page=${pageState.per_page}`;
-    console.log(fetch_url);
     (async () => {
       const response = await fetch(fetch_url);
       const data = await response.json();
@@ -77,9 +76,9 @@ export default function ResourceList() {
 
   if (
     (queryIdentifier != pageState.identifier) ||
-    (queryStatus != pageState.status) ||
-    (parseInt(queryPage) != pageState.pageNumber) ||
-    (queryPerPage != pageState.per_page)
+    (queryStatus && queryStatus != pageState.status) ||
+    (queryPage && parseInt(queryPage) != pageState.pageNumber) ||
+    (queryPerPage && queryPerPage != pageState.per_page)
   ) {
 
     if (queryIdentifier != pageState.identifier) { 
@@ -87,19 +86,19 @@ export default function ResourceList() {
       // setFilteredResources(resources.filter((resource) => resource.identifier === queryIdentifier)); 
       newPageState.identifier = queryIdentifier;
     }
-    if (queryStatus != pageState.status) {
+    if (queryStatus && queryStatus != pageState.status) {
       // console.log("changing status from " + pageState.status + " to " + queryStatus);
       // setFilteredResources(filteredResources.filter((resource) => resource.status === queryStatus)); 
       newPageState.status = queryStatus;
     }
-    if (queryPage != pageState.pageNumber) { 
+    if (queryPage && queryPage != pageState.pageNumber) { 
       // console.log("changing page number from " + pageState.pageNumber + " to " + queryPage);
       newPageState.pageNumber = queryPage;
     } else if (newPageState.identifier != pageState.identifier || newPageState.status != pageState.status) {
       // Move to page 1 if a filter param was updated and the page isn't specified
       newPageState.pageNumber = 1;
     }
-    if (queryPerPage != pageState.per_page) {
+    if (queryPerPage && queryPerPage != pageState.per_page) {
       newPageState.per_page = queryPerPage;
     }
     setPageState(newPageState);
