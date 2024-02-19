@@ -48,26 +48,37 @@ module Api
 
       # GET /resources
       def index
-        statuses = ['pending', 'processing', 'failure', 'ready']
-
-        per_page = index_params[:per_page] ? Integer(index_params[:per_page]) : 50
-        param_status = index_params[:status].is_a?(String) ? index_params[:status].downcase : index_params[:status]
-        status = statuses.include?(param_status) ? statuses.index(param_status) : param_status
-        page = index_params[:page] ? Integer(index_params[:page]) : 1
-        identifier = index_params[:identifier]
+        per_page, status, page = get_index_query_params(index_params[:per_page], index_params[:status], index_params[:page])
 
         resources = Resource
-        identifier && resources = resources.where(identifier: identifier)
+        index_params[:identifier] && resources = resources.where(identifier: index_params[:identifier])
         status && status != 'any' && resources = resources.where(status: status)
-        last_page = per_page * (page - 1) < resources.order(:status).length && per_page * page >= resources.order(:status).length
-        resources = resources.limit(per_page).offset((page - 1) * per_page)
-        status && status != 'any' && resources = resources.order(:status)
+        resources, last_page = find_page(resources, page, per_page)
 
         render json:
           { resources: resources.map(&:attributes), last_page: last_page }
       end
 
       private
+
+        def find_page(resources, page, per_page)
+          last_page = per_page * (page - 1) < resources.order(:status).length && per_page * page >= resources.order(:status).length
+
+          resources = resources.limit(per_page).offset((page - 1) * per_page)
+          status && status != 'any' && resources = resources.order(:status)
+          [resources, last_page]
+        end
+
+        def get_index_query_params(per_page_p, status_p, page_p)
+          statuses = ['pending', 'processing', 'failure', 'ready']
+
+          per_page = per_page_p ? Integer(per_page_p) : 50
+          param_status = status_p.is_a?(String) ? status_p.downcase : status_p
+          status = statuses.include?(param_status) ? statuses.index(param_status) : param_status
+          page = page_p ? Integer(page_p) : 1
+
+          [per_page, status, page]
+        end
 
         def set_resource
           @resource = Resource.find_by(identifier: params[:id])

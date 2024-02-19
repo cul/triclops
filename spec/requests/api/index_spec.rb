@@ -130,13 +130,6 @@ RSpec.describe 'show resource', type: :request do
           }
         expect(JSON.parse(response.body)).to eq(expected_response_json)
       end
-
-      # it 'does not accept unexpected paramaters', focus=true do
-      #   # puts response
-      #   # expect(response).to have_http_status(:success)
-      #   expect_any_instance_of(ResourcesController).to recieve(:index).with({ identifier: 'test1', status: 'any', page: '1' }.with_indifferent_access)
-      #   get_with_auth '/api/v1/resources?identifier=test1&status=any&page=1&secret=5'
-      # end
     end
   end
 end
