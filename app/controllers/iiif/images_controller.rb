@@ -3,8 +3,15 @@ class Iiif::ImagesController < ApplicationController
   include Triclops::Iiif::ImagesController::Schemas
   include Triclops::Iiif::ImagesController::Sizing
 
-  before_action :add_cors_header!, only: [:info, :raster]
+  skip_before_action :verify_authenticity_token, only: [:raster_preflight_check]
+  before_action :add_cors_header!, only: [:info, :raster, :raster_preflight_check]
   before_action :set_resource_or_handle_not_found, only: [:info, :raster, :test_viewer]
+  before_action :set_base_type, only: [:info, :raster]
+  before_action :require_token_if_resource_has_view_limitation!, only: [:raster] # For now, not limiting info endpoint
+
+  def raster_preflight_check
+    render plain: 'Success', status: :ok
+  end
 
   def info
     unless @resource.ready?
@@ -14,11 +21,11 @@ class Iiif::ImagesController < ApplicationController
 
     assign_compliance_level_header!(response)
 
-    render json: info_json_for_resource(@resource)
+    render json: info_json_for_resource(@resource, @base_type)
   end
 
-  # GET /iiif/2/:identifier/:region/:size/:rotation/:quality.(:format)
-  # e.g. /iiif/2/sample/full/full/0/default.png
+  # GET /iiif/2/:base_type/:identifier/:region/:size/:rotation/:quality.(:format)
+  # e.g. /iiif/2/standard/cul:123/full/full/0/default.png
   def raster
     params_as_regular_hash = params.to_unsafe_h
     params_validation_result = Triclops::Contracts::Iiif2ImageParamsContract.new.call(params_as_regular_hash)
@@ -30,9 +37,10 @@ class Iiif::ImagesController < ApplicationController
 
     original_raster_opts = params_validation_result.to_h
     original_raster_opts.delete(:identifier) # :identifier isn't part of our "raster opts"
+    base_type = original_raster_opts.delete(:base_type) # :base_type isn't part of our "raster opts"
     normalized_raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(@resource, original_raster_opts)
 
-    handle_ready_resource_or_redirect(@resource, original_raster_opts, normalized_raster_opts)
+    handle_ready_resource_or_redirect(@resource, base_type, original_raster_opts, normalized_raster_opts)
   end
 
   def test_viewer
@@ -41,7 +49,27 @@ class Iiif::ImagesController < ApplicationController
 
   private
 
-  def handle_ready_resource_or_redirect(resource, original_raster_opts, normalized_raster_opts)
+  def require_token_if_resource_has_view_limitation!
+    # Placeholder images don't ever require a token
+    return if @resource.identifier.start_with?('placeholder')
+
+    # Featured images don't ever require a token
+    return if @base_type == Triclops::Iiif::Constants::BASE_TYPE_FEATURED
+
+    # If this resource does not have a view limitation, no token is required
+    return unless @resource.has_view_limitation
+    # This will immediately render a 401 if no token was provided
+    authenticate_or_request_with_http_token do |token, _options|
+      puts "got token #{token}"
+      validate_image_request_token(token, @base_type, @resource.identifier, request.remote_ip)
+    end
+  end
+
+  def validate_image_request_token(token, base_type, resource_identifier, client_ip)
+    Triclops::Utils::TokenUtils.token_is_valid?(token, base_type, resource_identifier, client_ip)
+  end
+
+  def handle_ready_resource_or_redirect(resource, base_type, original_raster_opts, normalized_raster_opts)
     # Whenever a valid resource is requested, cache the Resource identifier in
     # our ResourceAccessStatCache. This cache will be periodically flushed to the
     # Resource database (by a separate process) so that many access time updates
@@ -95,6 +123,10 @@ class Iiif::ImagesController < ApplicationController
   def contract_validation_error_response(contract_validation_result)
     error_messages = contract_validation_result.errors.map { |e| "#{e.path.join(' => ')} #{e.text}" }
     error_response(error_messages)
+  end
+
+  def set_base_type
+    @base_type = params[:base_type]
   end
 
   def set_resource_or_handle_not_found
@@ -157,30 +189,30 @@ class Iiif::ImagesController < ApplicationController
     resp.set_header('Link', compliance_level_url)
   end
 
-  def info_json_for_resource(resource)
+  def info_json_for_resource(resource, base_type)
+    width, height = dimensions_for_base_type(resource, base_type)
     resource.iiif_info(
-      iiif_info_url(resource.identifier)[0...-10], # chop off last 10 characters to remove "/info.json"
-      resource.width,
-      resource.height,
-      Triclops::Iiif::Constants::RECOMMENDED_SIZES.map { |size| closest_size(size, resource.width, resource.height) },
+      iiif_info_url(base_type, resource.identifier)[0...-10], # chop off last 10 characters to remove "/info.json"
+      width,
+      height,
+      Triclops::Iiif::Constants::RECOMMENDED_SIZES.map { |size| closest_size(size, width, height) },
       Triclops::Iiif::Constants::ALLOWED_FORMATS.keys,
       Triclops::Iiif::Constants::ALLOWED_QUALITIES,
       Triclops::Iiif::Constants::TILE_SIZE,
-      resource.scale_factors_for_tile_size(Triclops::Iiif::Constants::TILE_SIZE)
+      resource.scale_factors_for_tile_size(width, height, Triclops::Iiif::Constants::TILE_SIZE)
     )
   end
 
-  # def cacheable_raster?(resource, raster_opts)
-  #   # Do not use cache if the cache is disabled globally
-  #   return false unless TRICLOPS[:raster_cache][:enabled]
+  def dimensions_for_base_type(resource, base_type)
+    raise Triclops::Exceptions::UnknownBaseType, "Unknown base type: #{base_type}" unless Triclops::Iiif::Constants::ALLOWED_BASE_TYPES.include?(base_type)
 
-  #   # Serve cached images for placeholder resources
-  #   return true if resource.source_uri_is_placeholder?
-
-  #   # Serve a cached raster if the raster already exists in the cache
-  #   return true if resource.raster_exists?(raster_opts)
-
-  #   # Otherwise do not serve from the cache
-  #   false
-  # end
+    case base_type
+    when 'standard'
+      [resource.width, resource.height]
+    when 'limited'
+      [resource.limited_width, resource.limited_height]
+    when 'featured'
+      [resource.featured_width, resource.featured_height]
+    end
+  end
 end

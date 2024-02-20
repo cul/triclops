@@ -53,7 +53,7 @@ module Api
         end
 
         def create_params
-          params.require(:resource).permit(:source_uri, :featured_region, :pcdm_type)
+          params.require(:resource).permit(:source_uri, :featured_region, :pcdm_type, :has_view_limitation)
         end
     end
   end

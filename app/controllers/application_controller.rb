@@ -3,5 +3,6 @@ class ApplicationController < ActionController::Base
 
     def add_cors_header!
       headers['Access-Control-Allow-Origin'] = '*'
+      headers['Access-Control-Allow-Headers'] = 'Authorization'
     end
 end
