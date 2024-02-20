@@ -10,9 +10,24 @@ class Resource < ApplicationRecord
 
   enum status: { pending: 0, processing: 1, failure: 2, ready: 3 }
 
+  before_validation :wait_for_source_uri_if_local_disk_file
   before_validation :extract_width_and_height_if_missing_or_source_changed!
   after_save :queue_base_derivative_generation_if_pending
   after_destroy :delete_filesystem_cache!
+
+  def wait_for_source_uri_if_local_disk_file
+    protocol, path = self.source_uri.split('://')
+    return unless protocol == 'file'
+
+    # Under certain circumstances, a source_uri file that was recently writter by an external
+    # process may take a few seconds to become available for reading (for example, if the file
+    # was written to a network disk and the change has not been propagated yet to other servers).
+    # So we'll wait and try again a few times, if it's not found right away.
+    5.times do
+      break if File.exist?(path)
+      sleep 1
+    end
+  end
 
   # Generates a placeholder resource dynamically (without any database interaction)
   def self.placeholder_resource_for(identifier)
@@ -195,8 +210,8 @@ class Resource < ApplicationRecord
 
   # Returns an array of scale factors (e.g. [1, 2, 4, 8, 16]), based on the image dimensions
   # and the given tile_size.
-  def scale_factors_for_tile_size(tile_size)
-    Imogen::Iiif::Tiles.scale_factors_for(self.width, self.height, tile_size)
+  def scale_factors_for_tile_size(width, height, tile_size)
+    Imogen::Iiif::Tiles.scale_factors_for(width, height, tile_size)
   end
 
   def extract_width_and_height_if_missing_or_source_changed!

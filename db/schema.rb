@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_01_16_223132) do
+ActiveRecord::Schema[7.1].define(version: 2024_02_10_183132) do
   create_table "resources", force: :cascade do |t|
     t.string "identifier"
     t.text "source_uri"
@@ -23,6 +23,11 @@ ActiveRecord::Schema[7.1].define(version: 2024_01_16_223132) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "accessed_at"
+    t.integer "limited_width"
+    t.integer "limited_height"
+    t.integer "featured_width"
+    t.integer "featured_height"
+    t.boolean "has_view_limitation", default: true, null: false
     t.index ["identifier"], name: "index_resources_on_identifier", unique: true
     t.index ["status"], name: "index_resources_on_status"
   end

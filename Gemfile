@@ -13,6 +13,8 @@ gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'iiif_tile_gener
 gem 'io-wait', '0.2.0'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.7'
+# JWT Tokens
+gem 'jwt', '~> 2.7.1'
 # Use mysql as a database option for Active Record
 gem 'mysql2', '~> 0.5.5'
 # Use Puma as the app server
