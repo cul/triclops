@@ -19,7 +19,7 @@
     <%= vite_typescript_tag 'application.tsx' %>
   </head>
 
-  <body data-app-version="<%= APP_VERSION %>">
+  <body data-app-version="<%= APP_VERSION %>" data-user-signed-in="<%= user_signed_in? %>">
     <% flash.each do |type, msg| %>
       <div class="alert"><%= msg %></div>
     <% end %>
