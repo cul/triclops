@@ -37,7 +37,7 @@ class Iiif::ImagesController < ApplicationController
 
     original_raster_opts = params_validation_result.to_h
     original_raster_opts.delete(:identifier) # :identifier isn't part of our "raster opts"
-    base_type = original_raster_opts.delete(:base_type) # :base_type isn't part of our "raster opts"
+    base_type = params[:base_type] # :base_type isn't part of our "raster opts"
     normalized_raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(@resource, original_raster_opts)
 
     handle_ready_resource_or_redirect(@resource, base_type, original_raster_opts, normalized_raster_opts)
@@ -53,8 +53,8 @@ class Iiif::ImagesController < ApplicationController
     # Placeholder images don't ever require a token
     return if @resource.identifier.start_with?('placeholder')
 
-    # Featured images don't ever require a token
-    return if @base_type == Triclops::Iiif::Constants::BASE_TYPE_FEATURED
+    # Featured and limited images don't ever require a token
+    return if [Triclops::Iiif::Constants::BASE_TYPE_FEATURED, Triclops::Iiif::Constants::BASE_TYPE_LIMITED].include?(@base_type)
 
     # If this resource does not have a view limitation, no token is required
     return unless @resource.has_view_limitation
@@ -83,7 +83,7 @@ class Iiif::ImagesController < ApplicationController
       TRICLOPS[:raster_cache][:access_stats_enabled]
 
     if resource.ready?
-      handle_ready_resource(original_raster_opts, normalized_raster_opts)
+      handle_ready_resource(base_type, original_raster_opts, normalized_raster_opts)
     else
       Rails.logger.debug(
         "[#{resource.identifier}] Redirecting raster request to placeholder image because resource is not ready"
@@ -93,8 +93,8 @@ class Iiif::ImagesController < ApplicationController
   end
 
   # rubocop:disable Metrics/MethodLength
-  def handle_ready_resource(original_raster_opts, normalized_raster_opts)
-    cache_hit = @resource.raster_exists?(normalized_raster_opts)
+  def handle_ready_resource(base_type, original_raster_opts, normalized_raster_opts)
+    cache_hit = @resource.raster_exists?(base_type, normalized_raster_opts)
     unless cache_hit
       Rails.logger.error(
         "[#{@resource.identifier}] "\
@@ -103,11 +103,11 @@ class Iiif::ImagesController < ApplicationController
       )
     end
     if cache_hit || TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::GENERATE_AND_CACHE || @resource.source_uri_is_placeholder?
-      @resource.yield_cached_raster(normalized_raster_opts) do |raster_file|
+      @resource.yield_cached_raster(base_type, normalized_raster_opts) do |raster_file|
         send_raster_file(raster_file, normalized_raster_opts, @resource.updated_at, delivery_method: :send_file)
       end
     elsif TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::GENERATE_AND_DO_NOT_CACHE
-      @resource.yield_uncached_raster(normalized_raster_opts) do |raster_file|
+      @resource.yield_uncached_raster(base_type, normalized_raster_opts) do |raster_file|
         send_raster_file(raster_file, normalized_raster_opts, @resource.updated_at, delivery_method: :send_data)
       end
     else # TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::ERROR
@@ -208,7 +208,7 @@ class Iiif::ImagesController < ApplicationController
 
     case base_type
     when 'standard'
-      [resource.width, resource.height]
+      [resource.standard_width, resource.standard_height]
     when 'limited'
       [resource.limited_width, resource.limited_height]
     when 'featured'

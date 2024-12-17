@@ -26,6 +26,8 @@ const App = () => {
               document.head.querySelector("[name='csrf-token']").content
             }
           />
+          <p><a href="/resque">View Resque status</a></p>
+
           <input type="submit" name="commit" value="Sign out" />
         </form>
       )

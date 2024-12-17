@@ -15,9 +15,10 @@ class CreateBaseDerivativesJob < ApplicationJob
       resource.processing!
     end
 
-    resource.generate_base_derivatives
+    resource.generate_base_derivatives_if_not_exist!
     resource.generate_commonly_requested_derivatives
 
+    resource.error_message = nil
     resource.ready!
   rescue StandardError, SyntaxError => e
     # NOTE: An uncaught SyntaxError in later-called code would result in a derivative_request

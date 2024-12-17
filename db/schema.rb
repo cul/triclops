@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_02_10_183132) do
+ActiveRecord::Schema[7.1].define(version: 2024_12_16_201527) do
   create_table "resources", force: :cascade do |t|
     t.string "identifier"
     t.text "source_uri"
@@ -18,8 +18,8 @@ ActiveRecord::Schema[7.1].define(version: 2024_02_10_183132) do
     t.text "error_message"
     t.string "featured_region"
     t.string "pcdm_type"
-    t.integer "width"
-    t.integer "height"
+    t.integer "standard_width"
+    t.integer "standard_height"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "accessed_at"

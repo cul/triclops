@@ -11,11 +11,12 @@ class Resource < ApplicationRecord
   enum status: { pending: 0, processing: 1, failure: 2, ready: 3 }
 
   before_validation :wait_for_source_uri_if_local_disk_file
-  before_validation :extract_width_and_height_if_missing_or_source_changed!
+  before_save :switch_to_pending_state_if_core_properties_changed!
   after_save :queue_base_derivative_generation_if_pending
   after_destroy :delete_filesystem_cache!
 
   def wait_for_source_uri_if_local_disk_file
+    return if self.source_uri.nil?
     protocol, path = self.source_uri.split('://')
     return unless protocol == 'file'
 
@@ -36,19 +37,24 @@ class Resource < ApplicationRecord
       status: 'ready',
       updated_at: Time.current,
       source_uri: identifier.sub(':', '://'),
-      width: PLACEHOLDER_SIZE,
-      height: PLACEHOLDER_SIZE,
+      standard_width: PLACEHOLDER_SIZE,
+      standard_height: PLACEHOLDER_SIZE,
+      limited_width: Triclops::Iiif::Constants::LIMITED_BASE_SIZE,
+      limited_height: Triclops::Iiif::Constants::LIMITED_BASE_SIZE,
+      featured_width: Triclops::Iiif::Constants::FEATURED_BASE_SIZE,
+      featured_height: Triclops::Iiif::Constants::FEATURED_BASE_SIZE,
       featured_region: "0,0,#{PLACEHOLDER_SIZE},#{PLACEHOLDER_SIZE}"
     )
   end
 
   # Clear ALL cached image files for this resource.
   def delete_filesystem_cache!
+    puts "Delete: #{Triclops::RasterCache.instance.cache_directory_for_identifier(self.identifier).inspect}"
     FileUtils.rm_rf(Triclops::RasterCache.instance.cache_directory_for_identifier(self.identifier))
   end
 
   def queue_base_derivative_generation_if_pending
-    return unless self.pending? && self.source_uri.present?
+    return unless self.pending?
     CreateBaseDerivativesJob.perform_later(self.identifier)
   end
 
@@ -65,16 +71,20 @@ class Resource < ApplicationRecord
   end
 
   # Generates base derivatives
-  def generate_base_derivatives
+  def generate_base_derivatives_if_not_exist!
     raise_exception_if_base_derivative_dependency_missing!
+    standard_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_STANDARD, self.identifier, mkdir_p: true)
+    limited_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_LIMITED, self.identifier, mkdir_p: true)
+    featured_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_FEATURED, self.identifier, mkdir_p: true)
 
-    # Generate full base at original resolution
-    full_base_path = Triclops::RasterCache.instance.full_base_cache_path(self.identifier, mkdir_p: true)
-    unless File.exist?(full_base_path)
-      self.with_source_image_file do |source_image_file|
+    return if File.exist?(standard_base_path) && File.exist?(limited_base_path) && File.exist?(featured_base_path)
+
+    self.with_source_image_file do |source_image_file|
+      # Use the original image to generate standard base
+      unless File.exist?(standard_base_path)
         Triclops::Raster.generate(
           source_image_file.path,
-          full_base_path,
+          standard_base_path,
           {
             region: 'full',
             size: 'full',
@@ -84,53 +94,87 @@ class Resource < ApplicationRecord
           }
         )
       end
+      # Store standard base dimensions
+      # NOTE: Must use `revalidate: true` option below to avoid relying on underlying vips recent operation cache.
+      Imogen.with_image(standard_base_path, { revalidate: true }) do |img|
+        self.standard_width = img.width
+        self.standard_height = img.height
+      end
+
+      # Use the original image to generate the limited base
+      # Note: Technically the 'limited' base can be larger than the source image, if the source image
+      # has a long side that's smaller than LIMITED_BASE_SIZE.  But that case will be rare, and
+      # shouldn't cause any issues.
+      unless File.exist?(limited_base_path)
+        Triclops::Raster.generate(
+          source_image_file.path,
+          limited_base_path,
+          {
+            region: 'full',
+            size: "!#{Triclops::Iiif::Constants::LIMITED_BASE_SIZE},#{Triclops::Iiif::Constants::LIMITED_BASE_SIZE}",
+            rotation: 0,
+            quality: Triclops::Iiif::Constants::BASE_QUALITY,
+            format: Triclops::Iiif::Constants::BASE_IMAGE_FORMAT
+          }
+        )
+      end
+      # Store limited base dimensions
+      # NOTE: Must use `revalidate: true` option below to avoid relying on underlying vips recent operation cache.
+      Imogen.with_image(limited_base_path, { revalidate: true }) do |img|
+        self.limited_width = img.width
+        self.limited_height = img.height
+      end
+
+      # Use the original image to generate the featured base
+      # Note: Technically the 'featured' base can be larger than the standard base, if the standard base
+      # has a long side that's smaller than FEATURED_BASE_SIZE.  But that case will be rare, and
+      # shouldn't cause any issues.
+
+      unless File.exist?(featured_base_path)
+        Triclops::Raster.generate(
+          source_image_file.path,
+          featured_base_path,
+          {
+            region: self.featured_region,
+            size: "!#{Triclops::Iiif::Constants::FEATURED_BASE_SIZE},#{Triclops::Iiif::Constants::FEATURED_BASE_SIZE}",
+            rotation: 0,
+            quality: Triclops::Iiif::Constants::BASE_QUALITY,
+            format: Triclops::Iiif::Constants::BASE_IMAGE_FORMAT
+          }
+        )
+      end
+
+      # Store featured base dimensions
+      # NOTE: Must use `revalidate: true` option below to avoid relying on underlying vips recent operation cache.
+      Imogen.with_image(featured_base_path, { revalidate: true }) do |img|
+        self.featured_width = img.width
+        self.featured_height = img.height
+      end
+
     end
 
-    # Use full base to generate reduced base
-    # Note: Technically the 'reduced' base can be larger than the full base, if the full base
-    # has a long side that's smaller than REDUCED_BASE_SIZE.  But that case will be rare, and
-    # shouldn't cause any issues.
-    reduced_base_path = Triclops::RasterCache.instance.reduced_base_cache_path(self.identifier, mkdir_p: true)
-    unless File.exist?(reduced_base_path)
-      Triclops::Raster.generate(
-        full_base_path,
-        reduced_base_path,
-        {
-          region: 'full',
-          size: "!#{Triclops::Iiif::Constants::REDUCED_BASE_SIZE},#{Triclops::Iiif::Constants::REDUCED_BASE_SIZE}",
-          rotation: 0,
-          quality: Triclops::Iiif::Constants::BASE_QUALITY,
-          format: Triclops::Iiif::Constants::BASE_IMAGE_FORMAT
-        }
-      )
-    end
+    # Save so that width/height, limited_width/limited_height, featured_width/featured_height properties are persisted.
+    self.save!
 
     true
   end
 
-  def base_derivatives_exist?
-    [
-      Triclops::RasterCache.instance.full_base_cache_path(self.identifier),
-      Triclops::RasterCache.instance.reduced_base_cache_path(self.identifier)
-    ].each do |path|
-      return false unless File.exist?(path)
-    end
-    true
-  end
-
-  # Generates commonly requested derivtives, including:
-  # - Full region scaled versions of the original, at RECOMMENDED_SIZES
-  # - (todo) IIIF zooming image viewer tiles
-  # rubocop:disable Metrics/AbcSize
+  # Generates commonly requested standard, reduced, and featured derivatives.
   def generate_commonly_requested_derivatives
-    # Generate base derivatives if they don't already exist?
-    generate_base_derivatives unless self.base_derivatives_exist?
+    generate_base_derivatives_if_not_exist!
 
-    full_base_path = Triclops::RasterCache.instance.full_base_cache_path(self.identifier)
+    self.generate_commonly_requested_standard_derivatives
+    self.generate_commonly_requested_limited_derivatives
+    self.generate_commonly_requested_featured_derivatives
+  end
 
-    # Generate recommended rasters at recommended sizes
-    # with Triclops::Iiif::Constants::BASE_QUALITY quality
-    # and Triclops::Iiif::Constants::DEFAULT_FORMAT format.
+  # Generates the following "standard" derivatives:
+  # - Scaled versions at Triclops::Iiif::Constants::RECOMMENDED_SIZES.
+  # - IIIF zooming image viewer tiles
+  def generate_commonly_requested_standard_derivatives
+    standard_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_STANDARD, self.identifier)
+
+    # Generate scaled rasters at Triclops::Iiif::Constants::RECOMMENDED_SIZES.
     Triclops::Iiif::Constants::RECOMMENDED_SIZES.each do |size|
       raster_opts = {
         region: 'full',
@@ -139,51 +183,29 @@ class Resource < ApplicationRecord
         quality: Triclops::Iiif::Constants::BASE_QUALITY,
         format: Triclops::Iiif::Constants::DEFAULT_FORMAT
       }
-      iiif_cache_path = Triclops::RasterCache.instance.iiif_cache_path(
+      raster_path = Triclops::RasterCache.instance.iiif_cache_path_for_raster(
+        Triclops::Iiif::Constants::BASE_TYPE_STANDARD,
         self.identifier,
         raster_opts,
         mkdir_p: true
       )
-      next if File.exist?(iiif_cache_path)
+      next if File.exist?(raster_path)
 
       Triclops::Raster.generate(
-        full_base_path,
-        iiif_cache_path,
-        raster_opts
-      )
-    end
-
-    # Generate recommended square versions at recommended sizes
-    # with Triclops::Iiif::Constants::BASE_QUALITY quality
-    # and Triclops::Iiif::Constants::DEFAULT_FORMAT format.
-    Triclops::Iiif::Constants::PRE_GENERATED_SQUARE_SIZES.each do |size|
-      raster_opts = {
-        region: self.featured_region,
-        size: "!#{size},#{size}",
-        rotation: 0,
-        quality: Triclops::Iiif::Constants::BASE_QUALITY,
-        format: Triclops::Iiif::Constants::DEFAULT_FORMAT
-      }
-      iiif_cache_path = Triclops::RasterCache.instance.iiif_cache_path(
-        self.identifier,
-        raster_opts,
-        mkdir_p: true
-      )
-      next if File.exist?(iiif_cache_path)
-
-      Triclops::Raster.generate(
-        full_base_path,
-        iiif_cache_path,
+        standard_base_path,
+        raster_path,
         raster_opts
       )
     end
 
     # Generate IIIF zooming image viewer tiles
-
-    Imogen.with_image(full_base_path, { revalidate: true }) do |image|
+    Imogen.with_image(standard_base_path, { revalidate: true }) do |image|
       Imogen::Iiif::Tiles.for(
         image,
-        Triclops::RasterCache.instance.iiif_cache_directory_for_identifier(self.identifier),
+        Triclops::RasterCache.instance.iiif_cache_directory_for_identifier(
+          Triclops::Iiif::Constants::BASE_TYPE_STANDARD,
+          self.identifier
+        ),
         :jpg,
         Triclops::Iiif::Constants::TILE_SIZE,
         'color'
@@ -194,7 +216,7 @@ class Resource < ApplicationRecord
     end
     # If the Imogen::Iiif::Tiles.generate_with_vips_dzsave method were fully implemented,
     # we would call it like this:
-    # Imogen.with_image(full_base_path, { revalidate: true }) do |image|
+    # Imogen.with_image(standard_base_path, { revalidate: true }) do |image|
     #   Imogen::Iiif::Tiles.generate_with_vips_dzsave(
     #     image,
     #     Triclops::RasterCache.instance.iiif_cache_directory_for_identifier(self.identifier),
@@ -208,31 +230,102 @@ class Resource < ApplicationRecord
   end
   # rubocop:enable Metrics/AbcSize
 
+  # Generates the following "limited" derivatives:
+  # - Scaled versions at Triclops::Iiif::Constants::RECOMMENDED_LIMITED_SIZES.
+  # - IIIF zooming image viewer tiles
+  # rubocop:disable Metrics/AbcSize
+  def generate_commonly_requested_limited_derivatives
+    limited_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_LIMITED, self.identifier)
+
+    # Generate scaled rasters at Triclops::Iiif::Constants::RECOMMENDED_LIMITED_SIZES.
+    Triclops::Iiif::Constants::RECOMMENDED_LIMITED_SIZES.each do |size|
+      raster_opts = {
+        region: 'full',
+        size: "!#{size},#{size}",
+        rotation: 0,
+        quality: Triclops::Iiif::Constants::BASE_QUALITY,
+        format: Triclops::Iiif::Constants::DEFAULT_FORMAT
+      }
+      raster_path = Triclops::RasterCache.instance.iiif_cache_path_for_raster(
+        Triclops::Iiif::Constants::BASE_TYPE_LIMITED,
+        self.identifier,
+        raster_opts,
+        mkdir_p: true
+      )
+      next if File.exist?(raster_path)
+
+      Triclops::Raster.generate(
+        limited_base_path,
+        raster_path,
+        raster_opts
+      )
+    end
+
+    # Generate IIIF zooming image viewer tiles
+    Imogen.with_image(limited_base_path, { revalidate: true }) do |image|
+      Imogen::Iiif::Tiles.for(
+        image,
+        Triclops::RasterCache.instance.iiif_cache_directory_for_identifier(
+          Triclops::Iiif::Constants::BASE_TYPE_LIMITED,
+          self.identifier
+        ),
+        :jpg,
+        Triclops::Iiif::Constants::TILE_SIZE,
+        'color'
+      ) do |img, suggested_tile_dest_path, format, iiif_opts|
+        FileUtils.mkdir_p(File.dirname(suggested_tile_dest_path))
+        Imogen::Iiif.convert(img, suggested_tile_dest_path, format, iiif_opts)
+      end
+    end
+  end
+  # rubocop:enable Metrics/AbcSize
+
+  # Generates the following "featured" derivatives:
+  # - Scaled versions, at Triclops::Iiif::Constants::PRE_GENERATED_SQUARE_SIZES.
+  # rubocop:disable Metrics/AbcSize
+  def generate_commonly_requested_featured_derivatives
+    featured_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_FEATURED, self.identifier)
+
+    # Generate recommended featured versions at PRE_GENERATED_SQUARE_SIZES
+    Triclops::Iiif::Constants::PRE_GENERATED_SQUARE_SIZES.each do |size|
+      raster_opts = {
+        region: 'full',
+        size: "!#{size},#{size}",
+        rotation: 0,
+        quality: Triclops::Iiif::Constants::BASE_QUALITY,
+        format: Triclops::Iiif::Constants::DEFAULT_FORMAT
+      }
+      raster_path = Triclops::RasterCache.instance.iiif_cache_path_for_raster(
+        Triclops::Iiif::Constants::BASE_TYPE_FEATURED,
+        self.identifier,
+        raster_opts,
+        mkdir_p: true
+      )
+      next if File.exist?(raster_path)
+
+      Triclops::Raster.generate(
+        featured_base_path,
+        raster_path,
+        raster_opts
+      )
+    end
+
+    true
+  end
+  # rubocop:enable Metrics/AbcSize
+
   # Returns an array of scale factors (e.g. [1, 2, 4, 8, 16]), based on the image dimensions
   # and the given tile_size.
   def scale_factors_for_tile_size(width, height, tile_size)
     Imogen::Iiif::Tiles.scale_factors_for(width, height, tile_size)
   end
 
-  def extract_width_and_height_if_missing_or_source_changed!
-    # If no source_uri, then there's nothing to extract.
-    return if self.source_uri.blank?
+  # Certain property changes should will trigger a switch to the pending state (which will trigger base
+  # derivative regeneration).
+  def switch_to_pending_state_if_core_properties_changed!
+    return unless self.source_uri_changed? || self.featured_region_changed? || self.pcdm_type_changed?
 
-    # If width and height are already known, and the source_uri hasn't changed, no need to extract.
-    return if self.width.present? && self.height.present? && !source_uri_changed?
-
-    begin
-      self.with_source_image_file do |source_image_file|
-        # NOTE: Must use `nocache: true` option below so that new width and height
-        # are always re-checked for recently rotated images.
-        Imogen.with_image(source_image_file.path, { revalidate: true }) do |img|
-          self.width = img.width
-          self.height = img.height
-        end
-      end
-    rescue Errno::ENOENT => e
-      self.errors.add(:source_uri, e.message)
-    end
+    self.status = :pending
   end
 
   # Yields a block with a File reference to the source image file for this Resource.
@@ -281,14 +374,14 @@ class Resource < ApplicationRecord
   # @return [void]
   # def raster(raster_opts, cache_enabled: false)
   #   if cache_enabled
-  #     yield_cached_raster(raster_opts) { |raster_file| yield raster_file }
+  #     yield_cached_raster(base_type, raster_opts) { |raster_file| yield raster_file }
   #   else
-  #     yield_uncached_raster(raster_opts) { |raster_file| yield raster_file }
+  #     yield_uncached_raster(base_type, raster_opts) { |raster_file| yield raster_file }
   #   end
   # end
 
-  def raster_exists?(raster_opts)
-    File.exist?(iiif_cache_path(raster_opts))
+  def raster_exists?(type, raster_opts)
+    File.exist?(iiif_cache_path_for_raster(type, raster_opts))
   end
 
   # Uses this Resource's pcdm_type value to determine which placeholder identifier should be returned
@@ -308,17 +401,18 @@ class Resource < ApplicationRecord
   end
 
   # @api private
-  def iiif_cache_path(raster_opts)
-    Triclops::RasterCache.instance.iiif_cache_path(
+  def iiif_cache_path_for_raster(type, raster_opts)
+    Triclops::RasterCache.instance.iiif_cache_path_for_raster(
+      type,
       source_uri_is_placeholder? ? self.source_uri : self.identifier,
       raster_opts
     )
   end
 
   # @api private
-  def yield_cached_raster(raster_opts)
+  def yield_cached_raster(base_type, raster_opts)
     # Get cache path
-    raster_file_path = iiif_cache_path(raster_opts)
+    raster_file_path = iiif_cache_path_for_raster(base_type, raster_opts)
 
     unless File.exist?(raster_file_path)
       # We use a blocking lock so that two processes don't try to to run the
