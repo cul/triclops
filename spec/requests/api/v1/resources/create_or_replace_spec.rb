@@ -8,6 +8,12 @@ RSpec.describe 'Create or replace', type: :request do
     }
   end
 
+  let(:valid_create_attributes) do
+    valid_update_attributes.merge({
+      source_uri: "railsroot://#{File.join('spec', 'fixtures', 'files', 'sample.jpg')}"
+    })
+  end
+
   let(:invalid_update_attributes) do
     {
       featured_region: 'a,b'
@@ -31,9 +37,9 @@ RSpec.describe 'Create or replace', type: :request do
     end
 
     context 'with authentication' do
-      context 'with valid update params' do
+      context 'with valid create/update params' do
         it 'for a non-existent identifier, creates a resource and returns a 201 created response' do
-          put_with_auth non_existent_identifier_put_url, params: { resource: valid_update_attributes }
+          put_with_auth non_existent_identifier_put_url, params: { resource: valid_create_attributes }
           expect(response).to have_http_status(:created)
         end
 

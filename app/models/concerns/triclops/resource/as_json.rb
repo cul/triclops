@@ -9,6 +9,7 @@ module Triclops
       def as_json(_options = {})
         [
           :identifier,
+          :has_view_limitation,
           :featured_region,
           :source_uri,
           :standard_width,

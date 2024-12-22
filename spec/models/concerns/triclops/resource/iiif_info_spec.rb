@@ -5,15 +5,15 @@ RSpec.describe Resource, type: :model do
   let(:rails_root_relative_path) { File.join('spec', 'fixtures', 'files', 'sample.jpg') }
   let(:source_file_path) { Rails.root.join(rails_root_relative_path).to_s }
   let(:source_uri) { 'railsroot://' + rails_root_relative_path }
-  let(:width) { 1920 }
-  let(:height) { 3125 }
+  let(:standard_width) { 1920 }
+  let(:standard_height) { 3125 }
   let(:featured_region) { '320,616,1280,1280' }
   let(:instance) do
     described_class.new({
       identifier: identifier,
       source_uri: source_uri,
-      width: width,
-      height: height,
+      standard_width: standard_width,
+      standard_height: standard_height,
       featured_region: featured_region
     })
   end
@@ -38,8 +38,8 @@ RSpec.describe Resource, type: :model do
           '@context': 'http://iiif.io/api/image/2/context.json',
           '@id': id_url,
           'protocol': 'http://iiif.io/api/image',
-          'width': width,
-          'height': height,
+          'width': standard_width,
+          'height': standard_height,
           'sizes': [
             { width: 157, height: 256 },
             { width: 315, height: 512 },
@@ -49,7 +49,7 @@ RSpec.describe Resource, type: :model do
           'tiles': [{ 'width': tile_size, 'scaleFactors': scale_factors }],
           'profile': ['http://iiif.io/api/image/2/level2.json', { 'formats': formats, 'qualities': qualities }]
         }
-      ).to eq(instance.iiif_info(id_url, width, height, sizes, formats, qualities, tile_size, scale_factors))
+      ).to eq(instance.iiif_info(id_url, standard_width, standard_height, sizes, formats, qualities, tile_size, scale_factors))
     end
   end
 end

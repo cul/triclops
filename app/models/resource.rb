@@ -34,6 +34,7 @@ class Resource < ApplicationRecord
   def self.placeholder_resource_for(identifier)
     Resource.new(
       identifier: identifier,
+      has_view_limitation: false,
       status: 'ready',
       updated_at: Time.current,
       source_uri: identifier.sub(':', '://'),
@@ -49,7 +50,6 @@ class Resource < ApplicationRecord
 
   # Clear ALL cached image files for this resource.
   def delete_filesystem_cache!
-    puts "Delete: #{Triclops::RasterCache.instance.cache_directory_for_identifier(self.identifier).inspect}"
     FileUtils.rm_rf(Triclops::RasterCache.instance.cache_directory_for_identifier(self.identifier))
   end
 
@@ -71,6 +71,7 @@ class Resource < ApplicationRecord
   end
 
   # Generates base derivatives
+  # rubocop:disable Metrics/AbcSize
   def generate_base_derivatives_if_not_exist!
     raise_exception_if_base_derivative_dependency_missing!
     standard_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_STANDARD, self.identifier, mkdir_p: true)
@@ -150,7 +151,6 @@ class Resource < ApplicationRecord
         self.featured_width = img.width
         self.featured_height = img.height
       end
-
     end
 
     # Save so that width/height, limited_width/limited_height, featured_width/featured_height properties are persisted.
@@ -158,6 +158,7 @@ class Resource < ApplicationRecord
 
     true
   end
+  # rubocop:enable Metrics/AbcSize
 
   # Generates commonly requested standard, reduced, and featured derivatives.
   def generate_commonly_requested_derivatives
@@ -228,12 +229,10 @@ class Resource < ApplicationRecord
 
     true
   end
-  # rubocop:enable Metrics/AbcSize
 
   # Generates the following "limited" derivatives:
   # - Scaled versions at Triclops::Iiif::Constants::RECOMMENDED_LIMITED_SIZES.
   # - IIIF zooming image viewer tiles
-  # rubocop:disable Metrics/AbcSize
   def generate_commonly_requested_limited_derivatives
     limited_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_LIMITED, self.identifier)
 
@@ -278,11 +277,9 @@ class Resource < ApplicationRecord
       end
     end
   end
-  # rubocop:enable Metrics/AbcSize
 
   # Generates the following "featured" derivatives:
   # - Scaled versions, at Triclops::Iiif::Constants::PRE_GENERATED_SQUARE_SIZES.
-  # rubocop:disable Metrics/AbcSize
   def generate_commonly_requested_featured_derivatives
     featured_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_FEATURED, self.identifier)
 
@@ -312,7 +309,6 @@ class Resource < ApplicationRecord
 
     true
   end
-  # rubocop:enable Metrics/AbcSize
 
   # Returns an array of scale factors (e.g. [1, 2, 4, 8, 16]), based on the image dimensions
   # and the given tile_size.
@@ -323,6 +319,7 @@ class Resource < ApplicationRecord
   # Certain property changes should will trigger a switch to the pending state (which will trigger base
   # derivative regeneration).
   def switch_to_pending_state_if_core_properties_changed!
+    return if new_record?
     return unless self.source_uri_changed? || self.featured_region_changed? || self.pcdm_type_changed?
 
     self.status = :pending
@@ -380,8 +377,8 @@ class Resource < ApplicationRecord
   #   end
   # end
 
-  def raster_exists?(type, raster_opts)
-    File.exist?(iiif_cache_path_for_raster(type, raster_opts))
+  def raster_exists?(base_type, raster_opts)
+    File.exist?(iiif_cache_path_for_raster(base_type, raster_opts))
   end
 
   # Uses this Resource's pcdm_type value to determine which placeholder identifier should be returned
@@ -401,9 +398,9 @@ class Resource < ApplicationRecord
   end
 
   # @api private
-  def iiif_cache_path_for_raster(type, raster_opts)
+  def iiif_cache_path_for_raster(base_type, raster_opts)
     Triclops::RasterCache.instance.iiif_cache_path_for_raster(
-      type,
+      base_type,
       source_uri_is_placeholder? ? self.source_uri : self.identifier,
       raster_opts
     )

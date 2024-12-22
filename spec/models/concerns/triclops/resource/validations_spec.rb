@@ -46,48 +46,38 @@ RSpec.describe Resource, type: :model do
       end
     end
 
-    context 'bad values for width and height fields' do
+    context 'bad values for standard_width and standard_height fields' do
       before do
-        # For this set of tests, we need to source_uri_changed? return value to false,
-        # otherwise the instance will try to re-extract the width and height from
-        # the source file and will ignore the values we are supplying in the test.
-        allow(instance).to receive(:source_uri_changed?).and_return(false)
-
-        instance.width = width
-        instance.height = height
+        instance.standard_width = standard_width
+        instance.standard_height = standard_height
       end
 
-      context 'has errors when width and height are negative' do
-        let(:width) { -1 }
-        let(:height) { -2 }
+      context 'has errors when standard_width and standard_height are negative' do
+        let(:standard_width) { -1 }
+        let(:standard_height) { -2 }
         it do
           expect(instance).not_to be_valid
-          expect(instance.errors.attribute_names).to include(:width, :height)
+          expect(instance.errors.attribute_names).to include(:standard_width, :standard_height)
         end
       end
 
-      context 'has errors when width and height are zero' do
-        let(:width) { 0 }
-        let(:height) { 0 }
+      context 'has errors when standard_width and standard_height are zero' do
+        let(:standard_width) { 0 }
+        let(:standard_height) { 0 }
 
         it do
           expect(instance).not_to be_valid
-          expect(instance.errors.attribute_names).to include(:width, :height)
+          expect(instance.errors.attribute_names).to include(:standard_width, :standard_height)
         end
       end
 
-      context 'has errors when width and height are not integers' do
-        let(:width) { 1.5 }
-        let(:height) { 2.5 }
+      context 'has errors when standard_width and standard_height are not integers' do
+        let(:standard_width) { 1.5 }
+        let(:standard_height) { 2.5 }
 
         it do
-          # For this test, need to source_uri_changed? return value to false,
-          # otherwise the instance will try to re-extract the width and height from
-          # the source file and will ignore the values we are supplying in the test.
-          allow(instance).to receive(:source_uri_changed?).and_return(false)
-
           expect(instance).not_to be_valid
-          expect(instance.errors.attribute_names).to include(:width, :height)
+          expect(instance.errors.attribute_names).to include(:standard_width, :standard_height)
         end
       end
     end

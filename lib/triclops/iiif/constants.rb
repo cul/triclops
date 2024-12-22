@@ -5,7 +5,7 @@ module Triclops::Iiif::Constants
   BASE_TYPE_LIMITED = 'limited'
   BASE_TYPE_FEATURED = 'featured'
   ALLOWED_BASE_TYPES = [BASE_TYPE_STANDARD, BASE_TYPE_LIMITED, BASE_TYPE_FEATURED].freeze
-  ALLOWED_BASE_TYPES_REGEX = /#{ALLOWED_BASE_TYPES.map{ |val| Regexp.quote(val) }.join('|')}/
+  ALLOWED_BASE_TYPES_REGEX = /#{ALLOWED_BASE_TYPES.map { |val| Regexp.quote(val) }.join('|')}/
   ALLOWED_FORMATS = {
     # 'png' => 'image/png', # For now, do not allow PNG (because it is generally bigger than jpg)
     'jpg' => 'image/jpeg'

@@ -36,14 +36,20 @@ Rails.application.routes.draw do
 
   namespace :iiif do
     scope ':version', version: /2/, defaults: { version: 2 } do
-      get '/test_viewer', to: redirect('/iiif/2/test_viewer/sample'), as: 'test_viewer_default'
+      get '/test_viewer', to: redirect('/iiif/2/standard/test_viewer/sample'), as: 'test_viewer_default'
       get '/test_viewer/:identifier', to: 'images#test_viewer', as: 'test_viewer'
       get '/:base_type/:identifier/info.json',
-        to: 'images#info', as: 'info', constraints: { base_type: Triclops::Iiif::Constants::ALLOWED_BASE_TYPES_REGEX }
+          to: 'images#info',
+          as: 'info',
+          constraints: { base_type: Triclops::Iiif::Constants::ALLOWED_BASE_TYPES_REGEX }
       get '/:base_type/:identifier/:region/:size/:rotation/:quality',
-        to: 'images#raster', as: 'raster', constraints: { base_type: Triclops::Iiif::Constants::ALLOWED_BASE_TYPES_REGEX }
-      options '/:base_type/:identifier/:region/:size/:rotation/:quality',
-        to: 'images#raster_preflight_check', as: 'raster_preflight_check', constraints: { base_type: Triclops::Iiif::Constants::ALLOWED_BASE_TYPES_REGEX }
+          to: 'images#raster',
+          as: 'raster',
+          constraints: { base_type: Triclops::Iiif::Constants::ALLOWED_BASE_TYPES_REGEX }
+      # options '/:base_type/:identifier/:region/:size/:rotation/:quality'
+      #   to: 'images#raster_preflight_check',
+      #   as: 'raster_preflight_check',
+      #   constraints: { base_type: Triclops::Iiif::Constants::ALLOWED_BASE_TYPES_REGEX }
     end
   end
 end

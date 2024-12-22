@@ -3,15 +3,19 @@ class Iiif::ImagesController < ApplicationController
   include Triclops::Iiif::ImagesController::Schemas
   include Triclops::Iiif::ImagesController::Sizing
 
-  skip_before_action :verify_authenticity_token, only: [:raster_preflight_check]
-  before_action :add_cors_header!, only: [:info, :raster, :raster_preflight_check]
+  # skip_before_action :verify_authenticity_token, only: [:raster_preflight_check]
+  before_action :add_cors_header!, only: [
+    :info,
+    :raster
+    # :raster_preflight_check
+  ]
   before_action :set_resource_or_handle_not_found, only: [:info, :raster, :test_viewer]
   before_action :set_base_type, only: [:info, :raster]
   before_action :require_token_if_resource_has_view_limitation!, only: [:raster] # For now, not limiting info endpoint
 
-  def raster_preflight_check
-    render plain: 'Success', status: :ok
-  end
+  # def raster_preflight_check
+  #   render plain: 'Success', status: :ok
+  # end
 
   def info
     unless @resource.ready?
@@ -29,7 +33,6 @@ class Iiif::ImagesController < ApplicationController
   def raster
     params_as_regular_hash = params.to_unsafe_h
     params_validation_result = Triclops::Contracts::Iiif2ImageParamsContract.new.call(params_as_regular_hash)
-
     if params_validation_result.errors.present?
       render json: contract_validation_error_response(params_validation_result), status: :bad_request
       return
@@ -58,9 +61,9 @@ class Iiif::ImagesController < ApplicationController
 
     # If this resource does not have a view limitation, no token is required
     return unless @resource.has_view_limitation
+
     # This will immediately render a 401 if no token was provided
     authenticate_or_request_with_http_token do |token, _options|
-      puts "got token #{token}"
       validate_image_request_token(token, @base_type, @resource.identifier, request.remote_ip)
     end
   end
