@@ -12,15 +12,10 @@ module Triclops
           :has_view_limitation,
           :featured_region,
           :source_uri,
-          :standard_width,
-          :standard_height,
-          :limited_width,
-          :limited_height,
-          :featured_width,
-          :featured_height,
-          :created_at,
-          :updated_at,
-          :accessed_at
+          :standard_width, :standard_height,
+          :limited_width, :limited_height,
+          :featured_width, :featured_height,
+          :created_at, :updated_at, :accessed_at
         ].map { |field_name| [field_name, self.send(field_name)] }.to_h
       end
     end

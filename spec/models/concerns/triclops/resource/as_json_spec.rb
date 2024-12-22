@@ -7,9 +7,6 @@ RSpec.describe Resource, type: :model do
 
   context "#as_json" do
     it 'returns the expected hash' do
-      created_at = resource.created_at
-      updated_at = resource.updated_at
-      accessed_at = resource.accessed_at
       expect(
         {
           identifier: resource.identifier,

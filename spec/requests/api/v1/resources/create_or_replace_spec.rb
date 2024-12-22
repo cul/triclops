@@ -10,7 +10,7 @@ RSpec.describe 'Create or replace', type: :request do
 
   let(:valid_create_attributes) do
     valid_update_attributes.merge({
-      source_uri: "railsroot://#{File.join('spec', 'fixtures', 'files', 'sample.jpg')}"
+      source_uri: "railsroot:///#{File.join('spec', 'fixtures', 'files', 'sample.jpg')}"
     })
   end
 

@@ -5,9 +5,10 @@ RSpec.describe "images#raster", type: :request do
     let(:base_type) { Triclops::Iiif::Constants::BASE_TYPE_STANDARD }
     let(:ready_identifier) { 'ready-resource' }
     let(:ready_raster_url) { "/iiif/2/#{base_type}/#{ready_identifier}/full/512,/0/default.jpg" }
-    let!(:ready_resource) {
+
+    before do
       FactoryBot.create(:resource, :ready, identifier: ready_identifier)
-    }
+    end
 
     context "successful response" do
       let(:config_with_access_stats_enabled) do
@@ -43,9 +44,11 @@ RSpec.describe "images#raster", type: :request do
     context "when a resource exists, but does not have a ready status" do
       let(:pending_resource_identifier) { 'pending-resource' }
       let(:pending_raster_url) { "/iiif/2/#{base_type}/#{pending_resource_identifier}/full/512,/0/default.jpg" }
-      let!(:pending_resource) {
+
+      before do
         FactoryBot.create(:resource, identifier: pending_resource_identifier)
-      }
+      end
+
       it "returns a 302 response for raster url when a ready resource does not exist, and redirects to a placeholder" do
         get pending_raster_url
         expect(response).to have_http_status(:found)
@@ -56,6 +59,7 @@ RSpec.describe "images#raster", type: :request do
     context "when a resource does not exist" do
       let(:non_existent_resource_identifier) { 'non-existent' }
       let(:non_existent_raster_url) { "/iiif/2/#{base_type}/#{non_existent_resource_identifier}/full/512,/0/default.jpg" }
+
       it "returns a 302 response for raster url when a ready resource does not exist, and redirects to a placeholder" do
         get non_existent_raster_url
         expect(response).to have_http_status(:found)

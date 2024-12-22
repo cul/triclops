@@ -16,28 +16,31 @@ class Resource < ApplicationRecord
   after_destroy :delete_filesystem_cache!
 
   def wait_for_source_uri_if_local_disk_file
-    return if self.source_uri.nil?
-    protocol, path = self.source_uri.split('://')
-    return unless protocol == 'file'
+    return if self.source_uri.nil? || !self.source_uri.start_with?('file:/')
+    file_path = Triclops::Utils::UriUtils.location_uri_to_file_path(self.source_uri)
 
     # Under certain circumstances, a source_uri file that was recently writter by an external
     # process may take a few seconds to become available for reading (for example, if the file
     # was written to a network disk and the change has not been propagated yet to other servers).
     # So we'll wait and try again a few times, if it's not found right away.
     5.times do
-      break if File.exist?(path)
+      break if File.exist?(file_path)
       sleep 1
     end
   end
 
-  # Generates a placeholder resource dynamically (without any database interaction)
-  def self.placeholder_resource_for(identifier)
+  # Generates a placeholder resource dynamically (without any database interaction),
+  # based on the given placeholder_resource_identifier.  Note that this method
+  # will raise an exception if placeholder_resource_identifier is not a
+  # recognized placeholder identifier.
+  def self.placeholder_resource_for(placeholder_resource_identifier)
+    raise ArgumentError unless KNOWN_PLACEHOLDER_IDENTIFIERS.include?(placeholder_resource_identifier)
     Resource.new(
-      identifier: identifier,
+      identifier: placeholder_resource_identifier,
       has_view_limitation: false,
       status: 'ready',
       updated_at: Time.current,
-      source_uri: identifier.sub(':', '://'),
+      source_uri: placeholder_resource_identifier.sub(':', ':///'),
       standard_width: PLACEHOLDER_SIZE,
       standard_height: PLACEHOLDER_SIZE,
       limited_width: Triclops::Iiif::Constants::LIMITED_BASE_SIZE,
@@ -331,21 +334,13 @@ class Resource < ApplicationRecord
   # @yield source_image_file [File] A file holding the source image content.
   def with_source_image_file
     raise Errno::ENOENT, 'Missing source_uri' if self.source_uri.blank?
-    protocol, path = self.source_uri.split('://')
+    uri_scheme = Addressable::URI.parse(self.source_uri).scheme
 
-    case protocol
-    when 'railsroot'
-      yield File.new(Rails.root.join(path).to_s)
+    if ['file', 'railsroot', 'placeholder'].include?(uri_scheme)
+      yield File.new(Triclops::Utils::UriUtils.location_uri_to_file_path(self.source_uri))
       return
-    when 'placeholder'
-      yield File.new(File.join(PLACEHOLDER_ROOT, path + '.png').to_s)
-      return
-    when 'file'
-      if File.exist?(path)
-        yield File.new(path)
-        return
-      end
     end
+
     raise Errno::ENOENT, "Could not resolve file location: #{self.source_uri}"
   end
 
@@ -450,10 +445,10 @@ class Resource < ApplicationRecord
   # Returns true if this Resource's source_uri points to a placeholder image value.
   #
   # @api private
-  # @return [Boolean] true if source_uri starts with 'placeholder://'
+  # @return [Boolean] true if source_uri starts with 'placeholder:///'
   def source_uri_is_placeholder?
     return false if self.source_uri.nil?
-    self.source_uri.start_with?('placeholder://')
+    self.source_uri.start_with?('placeholder:///')
   end
 
   def self.generate_raster_tempfile_path(extension = '.blob')

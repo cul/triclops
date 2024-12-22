@@ -1,6 +1,8 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
+# URI encoding and decoding
+gem 'addressable', '~> 2.8.0'
 # Use best_type for media type detection
 gem 'best_type', '~> 0.0.10'
 # For schema validation

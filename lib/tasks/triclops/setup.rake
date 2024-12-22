@@ -23,21 +23,21 @@ namespace :triclops do
       [
         {
           identifier: 'sample',
-          source_uri: 'railsroot://' + File.join('spec', 'fixtures', 'files', 'sample.jpg'),
+          source_uri: 'railsroot:///' + File.join('spec', 'fixtures', 'files', 'sample.jpg'),
           width: 1920,
           height: 3125,
           featured_region: '320,616,1280,1280'
         },
         {
           identifier: 'sample-with-transparency',
-          source_uri: 'railsroot://' + File.join('spec', 'fixtures', 'files', 'sample-with-transparency.png'),
+          source_uri: 'railsroot:///' + File.join('spec', 'fixtures', 'files', 'sample-with-transparency.png'),
           width: 1920,
           height: 1920,
           featured_region: '320,320,1280,1280'
         },
         {
           identifier: 'sound-resource',
-          source_uri: 'placeholder://sound',
+          source_uri: 'placeholder:///sound',
           width: 2292,
           height: 2292,
           featured_region: '0,0,1280,1280'

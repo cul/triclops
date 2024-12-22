@@ -5,7 +5,10 @@ RSpec.describe 'images#info', type: :request do
     let(:base_type) { Triclops::Iiif::Constants::BASE_TYPE_STANDARD }
     let(:ready_identifier) { 'ready-resource' }
     let(:ready_info_url) { "/iiif/2/#{base_type}/#{ready_identifier}/info.json" }
-    let!(:ready_resource) { FactoryBot.create(:resource, :ready, identifier: ready_identifier) }
+
+    before do
+      FactoryBot.create(:resource, :ready, identifier: ready_identifier)
+    end
 
     it "returns a successful response (with CORS header) for a ready resource info url" do
       get ready_info_url
@@ -16,7 +19,10 @@ RSpec.describe 'images#info', type: :request do
     context "when a resource exists, but does not have a ready status" do
       let(:pending_identifier) { 'pending-resource' }
       let(:pending_info_url) { "/iiif/2/#{base_type}/#{pending_identifier}/info.json" }
-      let!(:pending_resource) { FactoryBot.create(:resource, identifier: pending_identifier) }
+
+      before do
+        FactoryBot.create(:resource, identifier: pending_identifier)
+      end
 
       it "returns a 302 response for info url, and redirects to a placeholder" do
         get pending_info_url
