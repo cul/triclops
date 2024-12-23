@@ -15,7 +15,7 @@ RSpec.describe Resource, type: :model do
     }
   end
 
-  context '#initialize' do
+  describe '#initialize' do
     let(:identifier) { 'some-identifier' }
     let(:new_instance) do
       described_class.new(
@@ -49,7 +49,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#save' do
+  describe '#save' do
     it 'calls switch_to_pending_state_if_core_properties_changed! before save' do
       expect(ready_resource).to receive(:switch_to_pending_state_if_core_properties_changed!)
       ready_resource.save
@@ -61,21 +61,21 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#destroy' do
+  describe '#destroy' do
     it 'calls delete_filesystem_cache! after destroy' do
       expect(ready_resource).to receive(:delete_filesystem_cache!).and_call_original
       ready_resource.destroy
     end
   end
 
-  context '#delete_filesystem_cache!' do
+  describe '#delete_filesystem_cache!' do
     it 'performs the expected deletion operation' do
       expect(FileUtils).to receive(:rm_rf).with(Triclops::RasterCache.instance.cache_directory_for_identifier(ready_resource.identifier))
       ready_resource.delete_filesystem_cache!
     end
   end
 
-  context '#queue_base_derivative_generation_if_pending' do
+  describe '#queue_base_derivative_generation_if_pending' do
     it 'queues generation for a pending resource' do
       expect(CreateBaseDerivativesJob).to receive(:perform_later).with(pending_resource.identifier)
       pending_resource.queue_base_derivative_generation_if_pending
@@ -87,7 +87,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#switch_to_pending_state_if_core_properties_changed!' do
+  describe '#switch_to_pending_state_if_core_properties_changed!' do
     let(:new_unsaved_resource) { FactoryBot.create(:resource) }
     it 'does not change the status for a new record' do
       expect(new_unsaved_resource).not_to receive(:status=)
@@ -118,7 +118,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#yield_uncached_raster' do
+  describe '#yield_uncached_raster' do
     let(:tmp_file_path) { Rails.root.join('tmp', 'test-tmp-file.png').to_s }
     before do
       # For these tests, we always want to receive the same tmp_file_path
@@ -141,7 +141,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#yield_cached_raster' do
+  describe '#yield_cached_raster' do
     before do
       # We don't need a real lock for this test, so mocking the with_blocking_lock
       # method removes any Redis dependency for this test.
@@ -228,7 +228,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#with_source_image_file' do
+  describe '#with_source_image_file' do
     context "with a railsroot:/// path" do
       it "returns the path to an existing file" do
         allow(ready_resource).to receive(:source_uri).and_return('railsroot:///spec/fixtures/files/sample-with-transparency.png')
@@ -284,7 +284,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#source_uri_is_readable?' do
+  describe '#source_uri_is_readable?' do
     it 'returns true when the source uri file is readable' do
       expect(ready_resource.source_uri_is_readable?).to eq(true)
     end
@@ -295,7 +295,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#raster_exists?' do
+  describe '#raster_exists?' do
     it 'returns true when a raster file exists' do
       allow(File).to receive(:exist?).with(
         File.join(
@@ -311,15 +311,14 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#placeholder_identifier_for_pcdm_type' do
-
+  describe '#placeholder_identifier_for_pcdm_type' do
     {
       BestType::PcdmTypeLookup::AUDIO => 'placeholder:sound',
       BestType::PcdmTypeLookup::VIDEO => 'placeholder:moving_image',
       BestType::PcdmTypeLookup::TEXT => 'placeholder:text',
       BestType::PcdmTypeLookup::PAGE_DESCRIPTION => 'placeholder:text',
       BestType::PcdmTypeLookup::SOFTWARE => 'placeholder:software',
-      BestType::PcdmTypeLookup::FONT => 'placeholder:unavailable',
+      BestType::PcdmTypeLookup::FONT => 'placeholder:unavailable'
     }.each do |pcdm_type, expected_placeholder|
       it "returns the expected value for a resource with a pcdm_type of #{pcdm_type}" do
         ready_resource.pcdm_type = pcdm_type
@@ -351,7 +350,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#iiif_cache_path_for_raster' do
+  describe '#iiif_cache_path_for_raster' do
     it 'works as expected for a non-placeholder source_uri' do
       expect(ready_resource.iiif_cache_path_for_raster(base_type, raster_opts)).to eq(
         "#{TRICLOPS[:raster_cache][:directory]}/62/60/d5/01/"\
@@ -368,7 +367,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#source_uri_is_placeholder?' do
+  describe '#source_uri_is_placeholder?' do
     it 'returns false when location uri does not start with placeholder:///' do
       expect(ready_resource.source_uri_is_placeholder?).to eq(false)
     end
@@ -379,7 +378,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#wait_for_source_uri_if_local_disk_file' do
+  describe '#wait_for_source_uri_if_local_disk_file' do
     it 'returns immediately (and does not sleep) if the file exists' do
       expect(Kernel).not_to receive(:sleep)
       ready_resource.wait_for_source_uri_if_local_disk_file
@@ -393,11 +392,12 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '#raise_exception_if_base_derivative_dependency_missing!' do
+  describe '#raise_exception_if_base_derivative_dependency_missing!' do
     before do
       ready_resource.source_uri = nil
       ready_resource.featured_region = nil
     end
+
     it 'raises an exception under the expected conditions' do
       expect { ready_resource.raise_exception_if_base_derivative_dependency_missing! }.to raise_error(
         Triclops::Exceptions::MissingBaseImageDependencyException
@@ -405,7 +405,7 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  context '.placeholder_resource_for' do
+  describe '.placeholder_resource_for' do
     let(:valid_placeholder_resource_identifier) { 'placeholder:file' }
     let(:invalid_placeholder_resource_identifier) { 'placeholder:banana' }
 

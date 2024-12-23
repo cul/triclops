@@ -26,11 +26,16 @@ Metrics/BlockLength:
     - 'config/environments/*'
     - 'app/models/resource.rb'
     - 'app/controllers/iiif/images_controller.rb'
+    - 'app/models/concerns/triclops/resource/derivative_generation.rb'
 
 Metrics/ClassLength:
   Exclude:
     - 'app/models/resource.rb'
     - 'app/controllers/iiif/images_controller.rb'
+
+Metrics/ModuleLength:
+  Exclude:
+    - 'app/models/concerns/triclops/resource/derivative_generation.rb'
 
 Metrics/PerceivedComplexity:
   Exclude:
@@ -49,6 +54,7 @@ Metrics/MethodLength:
   Exclude:
     - 'config/initializers/**/*'
     - 'app/models/resource.rb'
+    - 'app/models/concerns/triclops/resource/derivative_generation.rb'
 
 Metrics/ParameterLists:
   Exclude:

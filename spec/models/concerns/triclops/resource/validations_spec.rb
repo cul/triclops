@@ -38,7 +38,6 @@ RSpec.describe Resource, type: :model do
     end
 
     context 'featured_region' do
-
       it 'has an error when a supplied featured_region format is invalid' do
         instance.featured_region = 'zzz'
         expect(instance).not_to be_valid
