@@ -37,10 +37,16 @@ RSpec.describe Resource, type: :model do
       end
     end
 
-    context 'featured_region format' do
-      before { instance.featured_region = 'zzz' }
+    context 'featured_region' do
 
       it 'has an error when a supplied featured_region format is invalid' do
+        instance.featured_region = 'zzz'
+        expect(instance).not_to be_valid
+        expect(instance.errors.attribute_names).to eq([:featured_region])
+      end
+
+      it 'has an error if featured_region is blank when a source_uri is present' do
+        instance.featured_region = nil
         expect(instance).not_to be_valid
         expect(instance.errors.attribute_names).to eq([:featured_region])
       end

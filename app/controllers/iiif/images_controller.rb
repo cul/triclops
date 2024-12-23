@@ -202,7 +202,7 @@ class Iiif::ImagesController < ApplicationController
       Triclops::Iiif::Constants::ALLOWED_FORMATS.keys,
       Triclops::Iiif::Constants::ALLOWED_QUALITIES,
       Triclops::Iiif::Constants::TILE_SIZE,
-      resource.scale_factors_for_tile_size(width, height, Triclops::Iiif::Constants::TILE_SIZE)
+      Imogen::Iiif::Tiles.scale_factors_for(width, height, Triclops::Iiif::Constants::TILE_SIZE)
     )
   end
 

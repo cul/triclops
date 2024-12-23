@@ -259,7 +259,7 @@ RSpec.describe Resource, type: :model do
       end
     end
 
-    context 'with an absolute file:// path' do
+    context 'with a file:// path' do
       it "returns the path to an existing file" do
         temp_file_path = Dir.tmpdir + '/triclops-test-file.png'
         FileUtils.touch(temp_file_path)
@@ -279,8 +279,52 @@ RSpec.describe Resource, type: :model do
     end
 
     it "raises an error for an unsupported protocol" do
-      allow(ready_resource).to receive(:source_uri).and_return('abc://what/does/this/protocol/even/mean.png')
+      allow(ready_resource).to receive(:source_uri).and_return('abc:///what/does/this/protocol/even/mean.png')
       expect { ready_resource.with_source_image_file { |_file| } }.to raise_error(Errno::ENOENT)
+    end
+  end
+
+  context '#source_uri_is_readable?' do
+    it 'returns true when the source uri file is readable' do
+      expect(ready_resource.source_uri_is_readable?).to eq(true)
+    end
+
+    it 'returns true when the source uri file is not readable' do
+      ready_resource.source_uri = 'file:///this/file/does/not/exist.txt'
+      expect(ready_resource.source_uri_is_readable?).to eq(false)
+    end
+  end
+
+  context '#raster_exists?' do
+    it 'returns true when a raster file exists' do
+      allow(File).to receive(:exist?).with(
+        File.join(
+          Triclops::RasterCache.instance.cache_directory_for_identifier(ready_resource.identifier),
+          "standard/iiif/full/full/0/color.png"
+        )
+      ).and_return(true)
+      expect(ready_resource.raster_exists?(base_type, raster_opts)).to eq(true)
+    end
+
+    it 'returns false when a raster file does not exist' do
+      expect(ready_resource.raster_exists?(base_type, raster_opts)).to eq(false)
+    end
+  end
+
+  context '#placeholder_identifier_for_pcdm_type' do
+
+    {
+      BestType::PcdmTypeLookup::AUDIO => 'placeholder:sound',
+      BestType::PcdmTypeLookup::VIDEO => 'placeholder:moving_image',
+      BestType::PcdmTypeLookup::TEXT => 'placeholder:text',
+      BestType::PcdmTypeLookup::PAGE_DESCRIPTION => 'placeholder:text',
+      BestType::PcdmTypeLookup::SOFTWARE => 'placeholder:software',
+      BestType::PcdmTypeLookup::FONT => 'placeholder:unavailable',
+    }.each do |pcdm_type, expected_placeholder|
+      it "returns the expected value for a resource with a pcdm_type of #{pcdm_type}" do
+        ready_resource.pcdm_type = pcdm_type
+        expect(ready_resource.placeholder_identifier_for_pcdm_type).to eq(expected_placeholder)
+      end
     end
   end
 
@@ -339,6 +383,25 @@ RSpec.describe Resource, type: :model do
     it 'returns immediately (and does not sleep) if the file exists' do
       expect(Kernel).not_to receive(:sleep)
       ready_resource.wait_for_source_uri_if_local_disk_file
+    end
+
+    it 'waits and performs multiple checks over time if the files does not exist' do
+      ready_resource.source_uri = 'file:///this/file/does/not/exist.tiff'
+      expect(File).to receive(:exist?).exactly(5).times.and_call_original
+      expect(ready_resource).to receive(:sleep).exactly(5).times
+      ready_resource.wait_for_source_uri_if_local_disk_file
+    end
+  end
+
+  context '#raise_exception_if_base_derivative_dependency_missing!' do
+    before do
+      ready_resource.source_uri = nil
+      ready_resource.featured_region = nil
+    end
+    it 'raises an exception under the expected conditions' do
+      expect { ready_resource.raise_exception_if_base_derivative_dependency_missing! }.to raise_error(
+        Triclops::Exceptions::MissingBaseImageDependencyException
+      )
     end
   end
 

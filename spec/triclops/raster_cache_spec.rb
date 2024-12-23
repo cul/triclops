@@ -64,4 +64,12 @@ RSpec.describe Triclops::RasterCache do
       )
     end
   end
+
+  context '#base_type_directory_for_identifier' do
+    it 'raises an error if an invalid base_type is given' do
+      expect {
+        instance.base_type_directory_for_identifier('invalid-base-type', identifier)
+      }.to raise_error(ArgumentError)
+    end
+  end
 end
