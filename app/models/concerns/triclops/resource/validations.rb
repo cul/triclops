@@ -4,7 +4,9 @@ module Triclops
       extend ActiveSupport::Concern
 
       included do
-        validates :identifier, :pcdm_type, :source_uri, presence: true
+        # NOTE: :source_uri is NOT required, since it's okay to create a Resource with no_uri and only a pcdm_type
+        # when derivatives have not yet been created for the resource, but we want to show a pdcm-type-based placeholder.
+        validates :identifier, :pcdm_type, presence: true
         validates :identifier, length: { minimum: 1, maximum: 255 }
         validates :standard_width, :standard_height,
                   :limited_width, :limited_height,

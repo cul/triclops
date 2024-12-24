@@ -85,6 +85,12 @@ RSpec.describe Resource, type: :model do
       expect(CreateBaseDerivativesJob).not_to receive(:perform_later)
       ready_resource.queue_base_derivative_generation_if_pending
     end
+
+    it "does not queue generation for a resource with a nil source_uri, even if it has a ready status" do
+      ready_resource.source_uri = nil
+      expect(CreateBaseDerivativesJob).not_to receive(:perform_later)
+      ready_resource.queue_base_derivative_generation_if_pending
+    end
   end
 
   describe '#switch_to_pending_state_if_core_properties_changed!' do

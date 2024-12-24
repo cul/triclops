@@ -58,6 +58,7 @@ class Resource < ApplicationRecord
   end
 
   def queue_base_derivative_generation_if_pending
+    return if self.source_uri.nil?
     return unless self.pending?
     CreateBaseDerivativesJob.perform_later(self.identifier)
   end
