@@ -10,6 +10,7 @@ class Triclops::Utils::UriUtils
     "file://#{Addressable::URI.encode(path).gsub('&', '%26').gsub('#', '%23')}"
   end
 
+  # Converts a file, railsroot, or placeholder URI to a file path
   def self.location_uri_to_file_path(location_uri)
     parsed_uri = Addressable::URI.parse(location_uri)
     uri_scheme = parsed_uri.scheme
