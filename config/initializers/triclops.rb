@@ -33,9 +33,6 @@ def validate_triclops_config!
       raise "Missing required config TRICLOPS[:config][:#{required_key}]"
     end
   end
-
-  # If temp_directory is not set, default to ruby temp dir
-  TRICLOPS[:tmp_directory] = Dir.tmpdir if TRICLOPS[:tmp_directory].nil?
 end
 
 # Raster cache config validation
@@ -43,6 +40,14 @@ Rails.application.config.after_initialize do
   # We need to run this after_initialize because at least one of our validations depends on
   # a constant from an auto-loaded file, and modules are only auto-loaded after initialization.
   validate_triclops_config!
+
+  # If temp_directory is not set, default to ruby temp dir
+  TRICLOPS[:tmp_directory] = Dir.tmpdir if TRICLOPS[:tmp_directory].nil?
+
+  # Set the TMPDIR ENV variable so that Vips (via Imogen) writes temp files here.
+  # This defaults to the OS temp directory if not otherwise set, which can be a
+  # problem if we're on a host that has limited local disk space.
+  ENV['TMPDIR'] = TRICLOPS[:tmp_directory]
 end
 
 Rails.application.config.active_job.queue_adapter = :inline if TRICLOPS['run_queued_jobs_inline']
