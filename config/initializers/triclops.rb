@@ -44,6 +44,9 @@ Rails.application.config.after_initialize do
   # If temp_directory is not set, default to ruby temp dir
   TRICLOPS[:tmp_directory] = Dir.tmpdir if TRICLOPS[:tmp_directory].nil?
 
+  # Make temp_directory if it does not already exist
+  FileUtils.mkdir_p(TRICLOPS[:tmp_directory])
+
   # Set the TMPDIR ENV variable so that Vips (via Imogen) writes temp files here.
   # This defaults to the OS temp directory if not otherwise set, which can be a
   # problem if we're on a host that has limited local disk space.
