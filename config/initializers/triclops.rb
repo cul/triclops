@@ -42,15 +42,18 @@ Rails.application.config.after_initialize do
   validate_triclops_config!
 
   # If temp_directory is not set, default to ruby temp dir
-  TRICLOPS[:tmp_directory] = Dir.tmpdir if TRICLOPS[:tmp_directory].nil?
-
+  TRICLOPS[:tmp_directory] = File.join(Dir.tmpdir, Rails.application.class.module_parent_name.downcase) if TRICLOPS[:tmp_directory].blank?
   # Make temp_directory if it does not already exist
   FileUtils.mkdir_p(TRICLOPS[:tmp_directory])
 
-  # Set the TMPDIR ENV variable so that Vips (via Imogen) writes temp files here.
+  # If vips_tmp_directory is not set, default to ruby temp dir
+  TRICLOPS[:vips_tmp_directory] = File.join(Dir.tmpdir, Rails.application.class.module_parent_name.downcase) if TRICLOPS[:vips_tmp_directory].blank?
+  # Make vips_tmp_directory if it does not already exist
+  FileUtils.mkdir_p(TRICLOPS[:vips_tmp_directory])
+  # Set the TMPDIR ENV variable so that Vips (via Imogen) writes temp files to the vips_tmp_directory.
   # This defaults to the OS temp directory if not otherwise set, which can be a
   # problem if we're on a host that has limited local disk space.
-  ENV['TMPDIR'] = TRICLOPS[:tmp_directory]
+  ENV['TMPDIR'] = TRICLOPS[:vips_tmp_directory]
 end
 
 Rails.application.config.active_job.queue_adapter = :inline if TRICLOPS['run_queued_jobs_inline']
