@@ -15,6 +15,7 @@ class CreateBaseDerivativesJob < ApplicationJob
       resource.processing!
     end
 
+    resource.delete_filesystem_cache!
     resource.generate_base_derivatives_if_not_exist!
     resource.generate_commonly_requested_derivatives
 

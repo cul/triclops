@@ -26,7 +26,10 @@ module Api
           @resource = Resource.create(create_params.merge(identifier: params[:id]))
           success_status = :created
         else
-          @resource.update(create_params)
+          update_params = create_params
+          # Retry derivative generation if this resource encountered failure in the past
+          update_params[:status] = :pending if @resource.failure?
+          @resource.update(update_params)
         end
 
         if @resource.errors.present?
