@@ -15,7 +15,11 @@ class CreateBaseDerivativesJob < ApplicationJob
       resource.processing!
     end
 
+    # Even though this job is called CreateBaseDerivativesJob, it's also used to RE-create base derivatives after an
+    # incomplete failed initial generation or a change to the content of the source image.
+    # So we delete the existing filesystem cache before regenerating.
     resource.delete_filesystem_cache!
+
     resource.generate_base_derivatives_if_not_exist!
     resource.generate_commonly_requested_derivatives
 
