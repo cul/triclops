@@ -53,6 +53,7 @@ class Iiif::ImagesController < ApplicationController
   private
 
   def require_token_if_resource_has_view_limitation!
+    return if TRICLOPS[:skip_tokens]
     # Placeholder images don't ever require a token
     return if @resource.identifier.start_with?('placeholder')
 
