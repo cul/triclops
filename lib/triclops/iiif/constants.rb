@@ -12,6 +12,7 @@ module Triclops::Iiif::Constants
   }.freeze
   DEFAULT_FORMAT = 'jpg'
   BASE_IMAGE_FORMAT = 'png'
+  BASE_IMAGE_EXTNAME = ".#{BASE_IMAGE_FORMAT}".freeze
   ALLOWED_QUALITIES = ['default', 'color', 'gray', 'bitonal'].freeze
   BASE_QUALITY = 'color'
   ALLOWED_ROTATIONS = [0, 90, 180, 270].freeze

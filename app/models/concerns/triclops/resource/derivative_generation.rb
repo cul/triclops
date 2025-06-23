@@ -15,18 +15,38 @@ module Triclops
               missing_fields.join(', ')
       end
 
+      # Generate the standard base path for the cache
+      def writeable_standard_base_path
+        Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_STANDARD, self.identifier, mkdir_p: true)
+      end
+
+      # Generate the standard base path unless it would copy a locally readable original
+      def readable_standard_base_path
+        with_source_image_file do |source_image_file|
+          extname = File.extname(source_image_file.path.downcase)
+          return source_image_file.path if extname == Triclops::Iiif::Constants::BASE_IMAGE_EXTNAME
+        end
+        cached_base = writeable_standard_base_path
+        cached_base if File.exist?(cached_base)
+      end
+
+      def base_exists?(base_path)
+        base_path && File.exist?(base_path)
+      end
+
       # Generates base derivatives
       # rubocop:disable Metrics/AbcSize
       def generate_base_derivatives_if_not_exist!
         raise_exception_if_base_derivative_dependency_missing!
-        standard_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_STANDARD, self.identifier, mkdir_p: true)
+        standard_base_path = readable_standard_base_path
         limited_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_LIMITED, self.identifier, mkdir_p: true)
         featured_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_FEATURED, self.identifier, mkdir_p: true)
 
-        return if File.exist?(standard_base_path) && File.exist?(limited_base_path) && File.exist?(featured_base_path)
+        return if base_exists?(standard_base_path) && base_exists?(limited_base_path) && base_exists?(featured_base_path)
 
+        standard_base_path = writeable_standard_base_path unless base_exists?(standard_base_path)
         self.with_source_image_file do |source_image_file|
-          # Use the original image to generate standard base
+          # Use the original image to generate standard base if necessary
           unless File.exist?(standard_base_path)
             Triclops::Raster.generate(
               source_image_file.path,
@@ -51,7 +71,7 @@ module Triclops
           # Note: Technically the 'limited' base can be larger than the source image, if the source image
           # has a long side that's smaller than LIMITED_BASE_SIZE.  But that case will be rare, and
           # shouldn't cause any issues.
-          unless File.exist?(limited_base_path)
+          unless base_exists?(limited_base_path)
             Triclops::Raster.generate(
               source_image_file.path,
               limited_base_path,
@@ -76,7 +96,7 @@ module Triclops
           # has a long side that's smaller than FEATURED_BASE_SIZE.  But that case will be rare, and
           # shouldn't cause any issues.
 
-          unless File.exist?(featured_base_path)
+          unless base_exists?(featured_base_path)
             Triclops::Raster.generate(
               source_image_file.path,
               featured_base_path,
@@ -118,7 +138,7 @@ module Triclops
       # - Scaled versions at Triclops::Iiif::Constants::RECOMMENDED_SIZES.
       # - IIIF zooming image viewer tiles
       def generate_commonly_requested_standard_derivatives
-        standard_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_STANDARD, self.identifier)
+        standard_base_path = readable_standard_base_path
 
         # Generate scaled rasters at Triclops::Iiif::Constants::RECOMMENDED_SIZES.
         Triclops::Iiif::Constants::RECOMMENDED_SIZES.each do |size|
@@ -156,6 +176,7 @@ module Triclops
             Triclops::Iiif::Constants::TILE_SIZE,
             'color'
           ) do |img, suggested_tile_dest_path, format, iiif_opts|
+            # iiif_opts keys are :region, :size, :rotation, :quality
             FileUtils.mkdir_p(File.dirname(suggested_tile_dest_path))
             Imogen::Iiif.convert(img, suggested_tile_dest_path, format, iiif_opts)
           end
