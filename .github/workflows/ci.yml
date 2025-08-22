@@ -32,6 +32,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Update apt
+        run: sudo apt-get update
       - name: Install vips
         run: sudo apt install -y libvips-tools
       - name: Check vips version
