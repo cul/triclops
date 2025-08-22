@@ -96,7 +96,7 @@ class Iiif::ImagesController < ApplicationController
     end
   end
 
-  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def handle_ready_resource(base_type, original_raster_opts, normalized_raster_opts)
     cache_hit = @resource.raster_exists?(base_type, normalized_raster_opts)
     unless cache_hit
@@ -115,10 +115,20 @@ class Iiif::ImagesController < ApplicationController
         send_raster_file(raster_file, normalized_raster_opts, @resource.updated_at, delivery_method: :send_data)
       end
     else # TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::ERROR
-      render plain: 'not found', status: :not_found
+
+      # !!! THIS IS TEMPORARY.  REMOVE THIS AFTER RASTER CACHE RESTRUCTURING IS COMPLETE. !!!
+      # If a raster is not found at the given path and the normalized_raster_opts != original_raster_opts,
+      # try checking the original_raster_opts path.
+      if normalized_raster_opts != original_raster_opts # rubocop:disable Style/IfInsideElse
+        # NOTE: Below, we are passing original_raster_opts to the normalized_raster_opts parameter
+        handle_ready_resource(base_type, original_raster_opts, original_raster_opts)
+      else
+        render plain: 'not found', status: :not_found
+      end
+
     end
   end
-  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
   def error_response(errors)
     { result: false, errors: errors }
