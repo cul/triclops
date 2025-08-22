@@ -3,11 +3,21 @@ module Triclops::Iiif::RasterOptNormalizer
   # Performs operations like converting a 'square' region into a numeric crop
   # region and aliasing 'color' quality as 'default' quality.
   #
+  # This method should only be called on a resource that has a known width and height.
+  # If it is called on a resource with a nil width or height it will raise a
+  # Triclops::Exceptions::MissingWidthOrHeightInformation exception.
+  #
   # @api private
   # @param raster_opts [Hash]
   #   A hash of IIIF options (e.g. {identifier: '...', region: '...', size: '...', etc. }).
   # @return [Hash] the processed version of raster_opts
   def self.normalize_raster_opts(resource, raster_opts)
+    # The resource's standard_width and standard_height values are required for us to generate normalized raster opts.
+    if resource.standard_width.nil? || resource.standard_height.nil?
+      raise Triclops::Exceptions::MissingWidthOrHeightInformation,
+            "Resource #{resource.identifier} is missing width and/or height information, so it is not possible to determine normalized raster opts."
+    end
+
     # duplicate raster_opts so we don't modify the incoming argument
     normalized_opts = raster_opts.dup
 

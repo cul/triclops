@@ -42,6 +42,30 @@ RSpec.describe Triclops::Iiif::RasterOptNormalizer do
         expect(described_class.normalize_raster_opts(resource, raster_opts)).to eq(expected_output)
       end
     end
+
+    context 'when the resource has a nil standard_width value' do
+      before do
+        resource.standard_width = nil
+      end
+
+      it 'raises an exception' do
+        expect {
+          described_class.normalize_raster_opts(resource, raster_opts)
+        }.to raise_error(Triclops::Exceptions::MissingWidthOrHeightInformation)
+      end
+    end
+
+    context 'when the resource has a nil standard_height value' do
+      before do
+        resource.standard_height = nil
+      end
+
+      it 'raises an exception' do
+        expect {
+          described_class.normalize_raster_opts(resource, raster_opts)
+        }.to raise_error(Triclops::Exceptions::MissingWidthOrHeightInformation)
+      end
+    end
   end
 
   describe '.normalize_raster_size' do
