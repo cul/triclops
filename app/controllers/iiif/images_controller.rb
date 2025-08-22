@@ -41,9 +41,8 @@ class Iiif::ImagesController < ApplicationController
     original_raster_opts = params_validation_result.to_h
     original_raster_opts.delete(:identifier) # :identifier isn't part of our "raster opts"
     base_type = params[:base_type] # :base_type isn't part of our "raster opts"
-    normalized_raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(@resource, original_raster_opts)
 
-    handle_ready_resource_or_redirect(@resource, base_type, original_raster_opts, normalized_raster_opts)
+    handle_ready_resource_or_redirect(@resource, base_type, original_raster_opts)
   end
 
   def test_viewer
@@ -73,7 +72,7 @@ class Iiif::ImagesController < ApplicationController
     Triclops::Utils::TokenUtils.token_is_valid?(token, base_type, resource_identifier, client_ip)
   end
 
-  def handle_ready_resource_or_redirect(resource, base_type, original_raster_opts, normalized_raster_opts)
+  def handle_ready_resource_or_redirect(resource, base_type, original_raster_opts)
     # Whenever a valid resource is requested, cache the Resource identifier in
     # our ResourceAccessStatCache. This cache will be periodically flushed to the
     # Resource database (by a separate process) so that many access time updates
@@ -87,6 +86,7 @@ class Iiif::ImagesController < ApplicationController
       TRICLOPS[:raster_cache][:access_stats_enabled]
 
     if resource.ready?
+      normalized_raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(@resource, original_raster_opts)
       handle_ready_resource(base_type, original_raster_opts, normalized_raster_opts)
     else
       Rails.logger.debug(
