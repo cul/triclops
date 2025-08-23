@@ -116,12 +116,11 @@ class Iiif::ImagesController < ApplicationController
       end
     else # TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::ERROR
 
-      # !!! THIS IS TEMPORARY.  REMOVE THIS AFTER RASTER CACHE RESTRUCTURING IS COMPLETE. !!!
-      # If a raster is not found at the given path and the normalized_raster_opts != original_raster_opts,
-      # try checking the original_raster_opts path.
-      if normalized_raster_opts != original_raster_opts # rubocop:disable Style/IfInsideElse
-        # NOTE: Below, we are passing original_raster_opts to the normalized_raster_opts parameter
-        handle_ready_resource(base_type, original_raster_opts, original_raster_opts)
+      # !!! THIS IS TEMPORARY.  AFTER RASTER CACHE RESTRUCTURING IS COMPLETE, REPLACE THE CODE BELOW. !!!
+      # If a raster is not found at the normalized opt location,
+      normalized_raster_opts_with_original_size_opt = normalized_raster_opts.merge(size: original_raster_opts[:size])
+      if normalized_raster_opts != normalized_raster_opts_with_original_size_opt
+        handle_ready_resource(base_type, original_raster_opts, normalized_raster_opts_with_original_size_opt)
       else
         render plain: 'not found', status: :not_found
       end
