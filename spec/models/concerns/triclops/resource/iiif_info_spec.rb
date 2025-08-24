@@ -29,7 +29,7 @@ RSpec.describe Resource, type: :model do
       ]
     end
     let(:formats) { ['png', 'jpg'] }
-    let(:qualities) { ['default', 'color', 'gray', 'bitonal'] }
+    let(:qualities) { ['default', 'color'] }
     let(:tile_size) { 512 }
     let(:scale_factors) { [1, 2, 4, 8, 16] }
     it 'returns the expected hash' do
