@@ -6,7 +6,7 @@ module Triclops
       # Returns a IIIF 2.1 info hash about this image resource.
       # @param id_url [String] Identifying URL for this resource.
       # @return [Hash] IIIF 2.1 structured info response.
-      def iiif_info(id_url, width, height, sizes, formats, qualities, tile_size, scale_factors)
+      def iiif_info(id_url, width, height, sizes, formats, qualities, tile_size, scale_factors, compliance_level_url)
         {
           '@context': 'http://iiif.io/api/image/2/context.json',
           '@id': id_url,
@@ -15,7 +15,7 @@ module Triclops
           'height': height,
           'sizes': sizes.map { |size| { 'width': size[0], 'height': size[1] } },
           'tiles': tile_info(tile_size, scale_factors),
-          'profile': ['http://iiif.io/api/image/2/level2.json', { 'formats': formats, 'qualities': qualities }]
+          'profile': [compliance_level_url, { 'formats': formats, 'qualities': qualities }]
         }
       end
 

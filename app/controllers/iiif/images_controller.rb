@@ -192,13 +192,15 @@ class Iiif::ImagesController < ApplicationController
     resp['ETag'] = format('"%x"', modification_time)
   end
 
+  def compliance_level_url
+    if TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::ERROR
+      'http://iiif.io/api/image/2/level0.json'
+    else
+      'http://iiif.io/api/image/2/level1.json'
+    end
+  end
+
   def assign_compliance_level_header!(resp)
-    compliance_level_url =
-      if TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::ERROR
-        'http://iiif.io/api/image/2/level0.json'
-      else
-        'http://iiif.io/api/image/2/level1.json'
-      end
     resp.set_header('Link', compliance_level_url)
   end
 
@@ -212,7 +214,8 @@ class Iiif::ImagesController < ApplicationController
       Triclops::Iiif::Constants::ALLOWED_FORMATS.keys,
       Triclops::Iiif::Constants::ALLOWED_QUALITIES,
       Triclops::Iiif::Constants::TILE_SIZE,
-      Imogen::Iiif::Tiles.scale_factors_for(width, height, Triclops::Iiif::Constants::TILE_SIZE)
+      Imogen::Iiif::Tiles.scale_factors_for(width, height, Triclops::Iiif::Constants::TILE_SIZE),
+      compliance_level_url
     )
   end
 
