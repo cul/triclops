@@ -86,7 +86,7 @@ class Iiif::ImagesController < ApplicationController
       TRICLOPS[:raster_cache][:access_stats_enabled]
 
     if resource.ready?
-      normalized_raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(@resource, original_raster_opts)
+      normalized_raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(resource, original_raster_opts)
       handle_ready_resource(base_type, original_raster_opts, normalized_raster_opts)
     else
       Rails.logger.debug(
