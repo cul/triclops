@@ -48,16 +48,17 @@ module Triclops
         self.with_source_image_file do |source_image_file|
           # Use the original image to generate standard base if necessary
           unless File.exist?(standard_base_path)
+            raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(self, {
+              region: 'full',
+              size: 'full',
+              rotation: 0,
+              quality: Triclops::Iiif::Constants::BASE_QUALITY,
+              format: Triclops::Iiif::Constants::BASE_IMAGE_FORMAT
+            })
             Triclops::Raster.generate(
               source_image_file.path,
               standard_base_path,
-              {
-                region: 'full',
-                size: 'full',
-                rotation: 0,
-                quality: Triclops::Iiif::Constants::BASE_QUALITY,
-                format: Triclops::Iiif::Constants::BASE_IMAGE_FORMAT
-              }
+              raster_opts
             )
           end
           # Store standard base dimensions
@@ -72,16 +73,17 @@ module Triclops
           # has a long side that's smaller than LIMITED_BASE_SIZE.  But that case will be rare, and
           # shouldn't cause any issues.
           unless base_exists?(limited_base_path)
+            raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(self, {
+              region: 'full',
+              size: "!#{Triclops::Iiif::Constants::LIMITED_BASE_SIZE},#{Triclops::Iiif::Constants::LIMITED_BASE_SIZE}",
+              rotation: 0,
+              quality: Triclops::Iiif::Constants::BASE_QUALITY,
+              format: Triclops::Iiif::Constants::BASE_IMAGE_FORMAT
+            })
             Triclops::Raster.generate(
               source_image_file.path,
               limited_base_path,
-              {
-                region: 'full',
-                size: "!#{Triclops::Iiif::Constants::LIMITED_BASE_SIZE},#{Triclops::Iiif::Constants::LIMITED_BASE_SIZE}",
-                rotation: 0,
-                quality: Triclops::Iiif::Constants::BASE_QUALITY,
-                format: Triclops::Iiif::Constants::BASE_IMAGE_FORMAT
-              }
+              raster_opts
             )
           end
           # Store limited base dimensions
@@ -97,16 +99,17 @@ module Triclops
           # shouldn't cause any issues.
 
           unless base_exists?(featured_base_path)
+            raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(self, {
+              region: self.featured_region,
+              size: "!#{Triclops::Iiif::Constants::FEATURED_BASE_SIZE},#{Triclops::Iiif::Constants::FEATURED_BASE_SIZE}",
+              rotation: 0,
+              quality: Triclops::Iiif::Constants::BASE_QUALITY,
+              format: Triclops::Iiif::Constants::BASE_IMAGE_FORMAT
+            })
             Triclops::Raster.generate(
               source_image_file.path,
               featured_base_path,
-              {
-                region: self.featured_region,
-                size: "!#{Triclops::Iiif::Constants::FEATURED_BASE_SIZE},#{Triclops::Iiif::Constants::FEATURED_BASE_SIZE}",
-                rotation: 0,
-                quality: Triclops::Iiif::Constants::BASE_QUALITY,
-                format: Triclops::Iiif::Constants::BASE_IMAGE_FORMAT
-              }
+              raster_opts
             )
           end
 
@@ -142,13 +145,13 @@ module Triclops
 
         # Generate scaled rasters at Triclops::Iiif::Constants::RECOMMENDED_SIZES.
         Triclops::Iiif::Constants::RECOMMENDED_SIZES.each do |size|
-          raster_opts = {
+          raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(self, {
             region: 'full',
             size: "!#{size},#{size}",
             rotation: 0,
             quality: Triclops::Iiif::Constants::BASE_QUALITY,
             format: Triclops::Iiif::Constants::DEFAULT_FORMAT
-          }
+          })
           raster_path = Triclops::RasterCache.instance.iiif_cache_path_for_raster(
             Triclops::Iiif::Constants::BASE_TYPE_STANDARD,
             self.identifier,
@@ -204,13 +207,13 @@ module Triclops
 
         # Generate scaled rasters at Triclops::Iiif::Constants::RECOMMENDED_LIMITED_SIZES.
         Triclops::Iiif::Constants::RECOMMENDED_LIMITED_SIZES.each do |size|
-          raster_opts = {
+          raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(self, {
             region: 'full',
             size: "!#{size},#{size}",
             rotation: 0,
             quality: Triclops::Iiif::Constants::BASE_QUALITY,
             format: Triclops::Iiif::Constants::DEFAULT_FORMAT
-          }
+          })
           raster_path = Triclops::RasterCache.instance.iiif_cache_path_for_raster(
             Triclops::Iiif::Constants::BASE_TYPE_LIMITED,
             self.identifier,
@@ -251,13 +254,13 @@ module Triclops
 
         # Generate recommended featured versions at PRE_GENERATED_SQUARE_SIZES
         Triclops::Iiif::Constants::PRE_GENERATED_SQUARE_SIZES.each do |size|
-          raster_opts = {
+          raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(self, {
             region: 'full',
             size: "!#{size},#{size}",
             rotation: 0,
             quality: Triclops::Iiif::Constants::BASE_QUALITY,
             format: Triclops::Iiif::Constants::DEFAULT_FORMAT
-          }
+          })
           raster_path = Triclops::RasterCache.instance.iiif_cache_path_for_raster(
             Triclops::Iiif::Constants::BASE_TYPE_FEATURED,
             self.identifier,

@@ -2,6 +2,7 @@ class Iiif::ImagesController < ApplicationController
   include ActionController::Live
   include Triclops::Iiif::ImagesController::Schemas
   include Triclops::Iiif::ImagesController::Sizing
+  include Triclops::Iiif::ImagesController::RasterOptFallbackLogic
 
   # skip_before_action :verify_authenticity_token, only: [:raster_preflight_check]
   before_action :add_cors_header!, only: [
@@ -41,9 +42,8 @@ class Iiif::ImagesController < ApplicationController
     original_raster_opts = params_validation_result.to_h
     original_raster_opts.delete(:identifier) # :identifier isn't part of our "raster opts"
     base_type = params[:base_type] # :base_type isn't part of our "raster opts"
-    normalized_raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(@resource, original_raster_opts)
 
-    handle_ready_resource_or_redirect(@resource, base_type, original_raster_opts, normalized_raster_opts)
+    handle_ready_resource_or_redirect(@resource, base_type, original_raster_opts)
   end
 
   def test_viewer
@@ -73,7 +73,7 @@ class Iiif::ImagesController < ApplicationController
     Triclops::Utils::TokenUtils.token_is_valid?(token, base_type, resource_identifier, client_ip)
   end
 
-  def handle_ready_resource_or_redirect(resource, base_type, original_raster_opts, normalized_raster_opts)
+  def handle_ready_resource_or_redirect(resource, base_type, original_raster_opts)
     # Whenever a valid resource is requested, cache the Resource identifier in
     # our ResourceAccessStatCache. This cache will be periodically flushed to the
     # Resource database (by a separate process) so that many access time updates
@@ -87,6 +87,7 @@ class Iiif::ImagesController < ApplicationController
       TRICLOPS[:raster_cache][:access_stats_enabled]
 
     if resource.ready?
+      normalized_raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(resource, original_raster_opts)
       handle_ready_resource(base_type, original_raster_opts, normalized_raster_opts)
     else
       Rails.logger.debug(
@@ -96,29 +97,25 @@ class Iiif::ImagesController < ApplicationController
     end
   end
 
-  # rubocop:disable Metrics/MethodLength
   def handle_ready_resource(base_type, original_raster_opts, normalized_raster_opts)
-    cache_hit = @resource.raster_exists?(base_type, normalized_raster_opts)
-    unless cache_hit
-      Rails.logger.error(
-        "[#{@resource.identifier}] "\
-        "Cache MISS: (original_raster_opts: #{original_raster_opts}) "\
-        "(normalized_raster_opts: #{normalized_raster_opts.inspect})"
-      )
-    end
+    raster_opts_to_try, cache_hit = raster_opts_for_ready_resource_with_fallback(
+      @resource, base_type, original_raster_opts, normalized_raster_opts
+    )
+
     if cache_hit || TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::GENERATE_AND_CACHE || @resource.source_uri_is_placeholder?
-      @resource.yield_cached_raster(base_type, normalized_raster_opts) do |raster_file|
-        send_raster_file(raster_file, normalized_raster_opts, @resource.updated_at, delivery_method: :send_file)
+      @resource.yield_cached_raster(base_type, raster_opts_to_try) do |raster_file|
+        send_raster_file(raster_file, raster_opts_to_try, @resource.updated_at, delivery_method: :send_file)
       end
     elsif TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::GENERATE_AND_DO_NOT_CACHE
-      @resource.yield_uncached_raster(base_type, normalized_raster_opts) do |raster_file|
-        send_raster_file(raster_file, normalized_raster_opts, @resource.updated_at, delivery_method: :send_data)
+      @resource.yield_uncached_raster(base_type, raster_opts_to_try) do |raster_file|
+        send_raster_file(raster_file, raster_opts_to_try, @resource.updated_at, delivery_method: :send_data)
       end
     else # TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::ERROR
+      # If we got here, that means we have a cache miss and we will treat this as an error (because we do not expect
+      # clients to request this resource with the given raster opts).  We'll render a 404 response to the user.
       render plain: 'not found', status: :not_found
     end
   end
-  # rubocop:enable Metrics/MethodLength
 
   def error_response(errors)
     { result: false, errors: errors }
@@ -183,13 +180,15 @@ class Iiif::ImagesController < ApplicationController
     resp['ETag'] = format('"%x"', modification_time)
   end
 
+  def compliance_level_url
+    if TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::ERROR
+      'http://iiif.io/api/image/2/level0.json'
+    else
+      'http://iiif.io/api/image/2/level1.json'
+    end
+  end
+
   def assign_compliance_level_header!(resp)
-    compliance_level_url =
-      if TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::ERROR
-        'http://iiif.io/api/image/2/level0.json'
-      else
-        'http://iiif.io/api/image/2/level1.json'
-      end
     resp.set_header('Link', compliance_level_url)
   end
 
@@ -203,7 +202,8 @@ class Iiif::ImagesController < ApplicationController
       Triclops::Iiif::Constants::ALLOWED_FORMATS.keys,
       Triclops::Iiif::Constants::ALLOWED_QUALITIES,
       Triclops::Iiif::Constants::TILE_SIZE,
-      Imogen::Iiif::Tiles.scale_factors_for(width, height, Triclops::Iiif::Constants::TILE_SIZE)
+      Imogen::Iiif::Tiles.scale_factors_for(width, height, Triclops::Iiif::Constants::TILE_SIZE),
+      compliance_level_url
     )
   end
 
