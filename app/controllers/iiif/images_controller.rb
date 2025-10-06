@@ -1,8 +1,8 @@
-# rubocop:disable Metrics/BlockNesting
 class Iiif::ImagesController < ApplicationController
   include ActionController::Live
   include Triclops::Iiif::ImagesController::Schemas
   include Triclops::Iiif::ImagesController::Sizing
+  include Triclops::Iiif::ImagesController::RasterOptFallbackLogic
 
   # skip_before_action :verify_authenticity_token, only: [:raster_preflight_check]
   before_action :add_cors_header!, only: [
@@ -97,52 +97,10 @@ class Iiif::ImagesController < ApplicationController
     end
   end
 
-  # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
   def handle_ready_resource(base_type, original_raster_opts, normalized_raster_opts)
-    raster_opts_to_try = normalized_raster_opts.dup
-    cache_hit = @resource.raster_exists?(base_type, raster_opts_to_try)
-
-    unless cache_hit
-      Rails.logger.error(
-        "[#{@resource.identifier}] "\
-        "Cache MISS: (original_raster_opts: #{original_raster_opts}) "\
-        "(raster_opts_to_try: #{raster_opts_to_try.inspect})"
-      )
-
-      # -- BEGIN temporary fallback code --
-      # Try a backup raster path, using the original size opt
-      raster_opts_to_try = normalized_raster_opts.merge(size: original_raster_opts[:size])
-      cache_hit = @resource.raster_exists?(base_type, raster_opts_to_try)
-
-      unless cache_hit
-        Rails.logger.error(
-          "[#{@resource.identifier}] "\
-          "Second try: Cache #{cache_hit ? 'HIT' : 'MISS'} for raster_opts_to_try: #{raster_opts_to_try}"
-        )
-
-        # If nothing was found at the backup raster path AND this a request for a 'full' region,
-        # try converting the size to a "!long_side,long_side" size value and see if that version exists in the cache.
-        if normalized_raster_opts[:region] == 'full'
-          # We expect normalized_raster_opts to have a size value of the format: "width,height" in most cases,
-          # but if it doesn't then we should skip the rest of this block.
-          size_opt = normalized_raster_opts[:size]
-          matches = /(\d+),(\d+)/.match(size_opt)
-          if matches
-            width = matches[1].to_i
-            height = matches[2].to_i
-            long_side = width > height ? width : height
-
-            raster_opts_to_try = normalized_raster_opts.merge(size: "!#{long_side},#{long_side}")
-            cache_hit = @resource.raster_exists?(base_type, raster_opts_to_try)
-            Rails.logger.error(
-              "[#{@resource.identifier}] "\
-              "Third try: Cache #{cache_hit ? 'HIT' : 'MISS'} for raster_opts_to_try: #{raster_opts_to_try}"
-            )
-          end
-        end
-      end
-      # -- END temporary fallback code --
-    end
+    raster_opts_to_try, cache_hit = raster_opts_for_ready_resource_with_fallback(
+      @resource, base_type, original_raster_opts, normalized_raster_opts
+    )
 
     if cache_hit || TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::GENERATE_AND_CACHE || @resource.source_uri_is_placeholder?
       @resource.yield_cached_raster(base_type, raster_opts_to_try) do |raster_file|
@@ -158,7 +116,6 @@ class Iiif::ImagesController < ApplicationController
       render plain: 'not found', status: :not_found
     end
   end
-  # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, # Metrics/BlockNesting
 
   def error_response(errors)
     { result: false, errors: errors }
@@ -263,4 +220,3 @@ class Iiif::ImagesController < ApplicationController
     end
   end
 end
-# rubocop:enable Metrics/BlockNesting
