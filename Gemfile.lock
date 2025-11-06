@@ -475,6 +475,7 @@ DEPENDENCIES
   jwt (~> 2.7.1)
   listen (~> 3.3)
   mysql2 (~> 0.5.5)
+  nokogiri (~> 1.18, >= 1.18.10)
   omniauth
   omniauth-cul (~> 0.2.0)
   puma (~> 5.2)
@@ -495,4 +496,4 @@ DEPENDENCIES
   web-console (>= 3.3.0)
 
 BUNDLED WITH
-   2.3.13
+   2.6.9
