@@ -4,7 +4,7 @@ module Triclops
       module RasterOptFallbackLogic
         extend ActiveSupport::Concern
 
-        # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/BlockNesting
+        # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/BlockNesting, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
         def raster_opts_for_ready_resource_with_fallback(resource, base_type, original_raster_opts, normalized_raster_opts)
           raster_opts_to_try = normalized_raster_opts.dup
           cache_hit = resource.raster_exists?(base_type, raster_opts_to_try)
@@ -41,10 +41,36 @@ module Triclops
 
                   raster_opts_to_try = normalized_raster_opts.merge(size: "!#{long_side},#{long_side}")
                   cache_hit = resource.raster_exists?(base_type, raster_opts_to_try)
-                  Rails.logger.error(
-                    "[#{resource.identifier}] "\
-                    "Third try: Cache #{cache_hit ? 'HIT' : 'MISS'} for raster_opts_to_try: #{raster_opts_to_try}"
-                  )
+                  unless cache_hit
+                    Rails.logger.error(
+                      "[#{resource.identifier}] "\
+                      "Third try: Cache #{cache_hit ? 'HIT' : 'MISS'} for raster_opts_to_try: #{raster_opts_to_try}"
+                    )
+
+                    # Unfortunately, we cannot guarantee that converting a rounded width or height value to a
+                    # "!#{long_side},#{long_side}" value will always result in the long_size value in the cache,
+                    # since the generation of "!#{long_side},#{long_side}" cached items was based on the original
+                    # ratio and rounding errors can occur.  So we'll also fall back to checking for
+                    # "!#{long_side - 1},#{long_side - 1}" and "!#{long_side + 1},#{long_side + 1}" versions.
+
+                    raster_opts_to_try = normalized_raster_opts.merge(size: "!#{long_side - 1},#{long_side - 1}")
+                    cache_hit = resource.raster_exists?(base_type, raster_opts_to_try)
+                    unless cache_hit
+                      Rails.logger.error(
+                        "[#{resource.identifier}] "\
+                        "Fourth try: Cache #{cache_hit ? 'HIT' : 'MISS'} for raster_opts_to_try: #{raster_opts_to_try}"
+                      )
+
+                      raster_opts_to_try = normalized_raster_opts.merge(size: "!#{long_side + 1},#{long_side + 1}")
+                      cache_hit = resource.raster_exists?(base_type, raster_opts_to_try)
+                      unless cache_hit
+                        Rails.logger.error(
+                          "[#{resource.identifier}] "\
+                          "Fifth try: Cache #{cache_hit ? 'HIT' : 'MISS'} for raster_opts_to_try: #{raster_opts_to_try}"
+                        )
+                      end
+                    end
+                  end
                 end
               end
             end
@@ -53,7 +79,7 @@ module Triclops
 
           [raster_opts_to_try, cache_hit]
         end
-        # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/BlockNesting
+        # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/BlockNesting, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       end
     end
   end

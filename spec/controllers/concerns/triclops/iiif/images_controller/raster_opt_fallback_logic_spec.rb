@@ -38,6 +38,12 @@ RSpec.describe Triclops::Iiif::ImagesController::RasterOptFallbackLogic do
   let(:normalized_raster_opts_with_exclamation_point_long_side_size_notation) do
     normalized_raster_opts.merge({ size: "!#{long_side_length},#{long_side_length}" })
   end
+  let(:normalized_raster_opts_with_exclamation_point_long_side_minus_one_size_notation) do
+    normalized_raster_opts.merge({ size: "!#{long_side_length - 1},#{long_side_length - 1}" })
+  end
+  let(:normalized_raster_opts_with_exclamation_point_long_side_plus_one_size_notation) do
+    normalized_raster_opts.merge({ size: "!#{long_side_length + 1},#{long_side_length + 1}" })
+  end
 
   before do
     allow(resource).to receive(:identifier).and_return(identifier)
@@ -57,7 +63,7 @@ RSpec.describe Triclops::Iiif::ImagesController::RasterOptFallbackLogic do
     end
 
     context 'when an associated file does not exist at the normalized_raster_opts path, '\
-            'but an associated file does exist at the normalized_raster_opts path with the size'\
+            'but an associated file does exist at the normalized_raster_opts path with the size '\
             'opt replaced with the original_raster_opts size opt' do
       before do
         allow(resource).to receive(:raster_exists?).with(base_type, normalized_raster_opts).and_return(false)
@@ -74,8 +80,8 @@ RSpec.describe Triclops::Iiif::ImagesController::RasterOptFallbackLogic do
     end
 
     context 'when an associated file does not exist at the normalized_raster_opts path, '\
-            'and it does not exist at the normalized_raster_opts path with the size'\
-            'opt replaced with the original_raster_opts size opt, but it does exist at'\
+            'and it does not exist at the normalized_raster_opts path with the size '\
+            'opt replaced with the original_raster_opts size opt, but it does exist at '\
             'the normalized_raster_opts path with the size replaced with "!long_side,long_side"' do
       before do
         allow(resource).to receive(:raster_exists?).with(base_type, normalized_raster_opts).and_return(false)
@@ -96,6 +102,66 @@ RSpec.describe Triclops::Iiif::ImagesController::RasterOptFallbackLogic do
   end
 
   context 'when an associated file does not exist at the normalized_raster_opts path, '\
+    'and it does not exist at the normalized_raster_opts path with the size '\
+    'opt replaced with the original_raster_opts size opt, '\
+    'and it does exist at the normalized_raster_opts path with the size replaced with "!long_side,long_side", '\
+    'but it does exist at the normalized_raster_opts path with the size '\
+    'replaced with "!long_side - 1,long_side - 1",' do
+    before do
+      allow(resource).to receive(:raster_exists?).with(base_type, normalized_raster_opts).and_return(false)
+      allow(resource).to receive(:raster_exists?).with(
+        base_type, normalized_raster_opts_with_original_size_opt
+      ).and_return(false)
+      allow(resource).to receive(:raster_exists?).with(
+        base_type, normalized_raster_opts_with_exclamation_point_long_side_size_notation
+      ).and_return(false)
+      allow(resource).to receive(:raster_exists?).with(
+        base_type, normalized_raster_opts_with_exclamation_point_long_side_minus_one_size_notation
+      ).and_return(true)
+    end
+
+    it 'returns the expected opts, and a cache hit of true' do
+      expect(
+        instance.raster_opts_for_ready_resource_with_fallback(
+          resource, base_type, original_raster_opts, normalized_raster_opts
+        )
+      ).to eq([normalized_raster_opts_with_exclamation_point_long_side_minus_one_size_notation, true])
+    end
+  end
+
+  context 'when an associated file does not exist at the normalized_raster_opts path, '\
+    'and it does not exist at the normalized_raster_opts path with the size '\
+    'opt replaced with the original_raster_opts size opt, '\
+    'and it does exist at the normalized_raster_opts path with the size replaced with "!long_side,long_side", '\
+    'and it does exist at the normalized_raster_opts path with the size replaced with "!long_side - 1,long_side - 1", '\
+    'but it does exist at the normalized_raster_opts path with the size '\
+    'replaced with "!long_side + 1,long_side + 1",' do
+    before do
+      allow(resource).to receive(:raster_exists?).with(base_type, normalized_raster_opts).and_return(false)
+      allow(resource).to receive(:raster_exists?).with(
+        base_type, normalized_raster_opts_with_original_size_opt
+      ).and_return(false)
+      allow(resource).to receive(:raster_exists?).with(
+        base_type, normalized_raster_opts_with_exclamation_point_long_side_size_notation
+      ).and_return(false)
+      allow(resource).to receive(:raster_exists?).with(
+        base_type, normalized_raster_opts_with_exclamation_point_long_side_minus_one_size_notation
+      ).and_return(false)
+      allow(resource).to receive(:raster_exists?).with(
+        base_type, normalized_raster_opts_with_exclamation_point_long_side_plus_one_size_notation
+      ).and_return(true)
+    end
+
+    it 'returns the expected opts, and a cache hit of true' do
+      expect(
+        instance.raster_opts_for_ready_resource_with_fallback(
+          resource, base_type, original_raster_opts, normalized_raster_opts
+        )
+      ).to eq([normalized_raster_opts_with_exclamation_point_long_side_plus_one_size_notation, true])
+    end
+  end
+
+  context 'when an associated file does not exist at the normalized_raster_opts path, '\
             'and it does not exist at any other fallback variants' do
     before do
       allow(resource).to receive(:raster_exists?).with(base_type, normalized_raster_opts).and_return(false)
@@ -105,12 +171,18 @@ RSpec.describe Triclops::Iiif::ImagesController::RasterOptFallbackLogic do
       allow(resource).to receive(:raster_exists?).with(
         base_type, normalized_raster_opts_with_exclamation_point_long_side_size_notation
       ).and_return(false)
+      allow(resource).to receive(:raster_exists?).with(
+        base_type, normalized_raster_opts_with_exclamation_point_long_side_minus_one_size_notation
+      ).and_return(false)
+      allow(resource).to receive(:raster_exists?).with(
+        base_type, normalized_raster_opts_with_exclamation_point_long_side_plus_one_size_notation
+      ).and_return(false)
     end
 
     it 'returns the expected opts, and a cache hit of false' do
       expect(instance.raster_opts_for_ready_resource_with_fallback(
                resource, base_type, original_raster_opts, normalized_raster_opts
-             )).to eq([normalized_raster_opts_with_exclamation_point_long_side_size_notation, false])
+             )).to eq([normalized_raster_opts_with_exclamation_point_long_side_plus_one_size_notation, false])
     end
   end
 end
