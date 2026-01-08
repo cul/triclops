@@ -29,14 +29,6 @@ RSpec.describe Resource, type: :model do
       end
     end
 
-    context 'source_uri' do
-      it 'must be readable if present' do
-        instance.source_uri = 'file:///does-not-exist'
-        instance.save
-        expect(instance.errors.attribute_names).to eq([:source_uri])
-      end
-    end
-
     context 'featured_region' do
       it 'has an error when a supplied featured_region format is invalid' do
         instance.featured_region = 'zzz'

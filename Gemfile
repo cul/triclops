@@ -1,6 +1,8 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
+# Amazon S3 SDK
+gem 'aws-sdk-s3', '~> 1'
 # URI encoding and decoding
 gem 'addressable', '~> 2.8.0'
 # Use best_type for media type detection

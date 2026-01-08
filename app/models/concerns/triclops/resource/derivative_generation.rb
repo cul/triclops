@@ -16,18 +16,25 @@ module Triclops
       end
 
       # Generate the standard base path for the cache
-      def writeable_standard_base_path
+      def standard_base_path
         Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_STANDARD, self.identifier, mkdir_p: true)
       end
 
-      # Generate the standard base path unless it would copy a locally readable original
-      def readable_standard_base_path
-        with_source_image_file do |source_image_file|
-          extname = File.extname(source_image_file.path.downcase)
-          return source_image_file.path if extname == Triclops::Iiif::Constants::BASE_IMAGE_EXTNAME
+      # Generate the standard base path unless it would copy a locally readable original.
+      # This method will either return a reference to the source_uri path if that path is locally readable (and not a
+      # remote uri like something stored in S3) OR the standard_base_path if the source_uri path is not locally readable.
+      def locally_readable_source_base_path
+        uri_scheme = Addressable::URI.parse(self.source_uri).scheme
+
+        if ::Resource::LOCAL_FILE_URI_SCHEMES.include?(uri_scheme)
+          with_source_image_file do |source_image_file|
+            extname = File.extname(source_image_file.path.downcase)
+            return source_image_file.path if extname == Triclops::Iiif::Constants::BASE_IMAGE_EXTNAME
+          end
         end
-        cached_base = writeable_standard_base_path
-        cached_base if File.exist?(cached_base)
+
+        possible_standard_base_path = self.standard_base_path
+        possible_standard_base_path if File.exist?(possible_standard_base_path)
       end
 
       def base_exists?(base_path)
@@ -38,16 +45,24 @@ module Triclops
       # rubocop:disable Metrics/AbcSize
       def generate_base_derivatives_if_not_exist!
         raise_exception_if_base_derivative_dependency_missing!
-        standard_base_path = readable_standard_base_path
+        locally_readable_path_to_source_file_or_standard_base = self.locally_readable_source_base_path
         limited_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_LIMITED, self.identifier, mkdir_p: true)
         featured_base_path = Triclops::RasterCache.instance.base_cache_path(Triclops::Iiif::Constants::BASE_TYPE_FEATURED, self.identifier, mkdir_p: true)
 
-        return if base_exists?(standard_base_path) && base_exists?(limited_base_path) && base_exists?(featured_base_path)
+        return if base_exists?(locally_readable_path_to_source_file_or_standard_base) && base_exists?(limited_base_path) && base_exists?(featured_base_path)
 
-        standard_base_path = writeable_standard_base_path unless base_exists?(standard_base_path)
         self.with_source_image_file do |source_image_file|
-          # Use the original image to generate standard base if necessary
-          unless File.exist?(standard_base_path)
+          # First, extract and store standard base dimensions from source file
+          # NOTE: Must use `revalidate: true` option below to avoid relying on underlying vips recent operation cache.
+          Imogen.with_image(source_image_file.path, { revalidate: true }) do |img|
+            self.standard_width = img.width
+            self.standard_height = img.height
+          end
+
+          # If we don't have a local full size image available (either from a source_uri path that points to a local
+          # image OR a previously generated standard base image), generate a standard base image that will be used for
+          # the generation of future cached images.
+          unless self.locally_readable_source_base_path && File.exist?(self.locally_readable_source_base_path)
             raster_opts = Triclops::Iiif::RasterOptNormalizer.normalize_raster_opts(self, {
               region: 'full',
               size: 'full',
@@ -57,15 +72,9 @@ module Triclops
             })
             Triclops::Raster.generate(
               source_image_file.path,
-              standard_base_path,
+              self.standard_base_path,
               raster_opts
             )
-          end
-          # Store standard base dimensions
-          # NOTE: Must use `revalidate: true` option below to avoid relying on underlying vips recent operation cache.
-          Imogen.with_image(standard_base_path, { revalidate: true }) do |img|
-            self.standard_width = img.width
-            self.standard_height = img.height
           end
 
           # Use the original image to generate the limited base
@@ -141,7 +150,9 @@ module Triclops
       # - Scaled versions at Triclops::Iiif::Constants::RECOMMENDED_SIZES.
       # - IIIF zooming image viewer tiles
       def generate_commonly_requested_standard_derivatives
-        standard_base_path = readable_standard_base_path
+        # NOTE: The local full size image could be either a source_uri path that points to a local image OR a
+        # the path to a previously generated standard base image.
+        local_full_size_image_base_path = self.locally_readable_source_base_path
 
         # Generate scaled rasters at Triclops::Iiif::Constants::RECOMMENDED_SIZES.
         Triclops::Iiif::Constants::RECOMMENDED_SIZES.each do |size|
@@ -161,14 +172,14 @@ module Triclops
           next if File.exist?(raster_path)
 
           Triclops::Raster.generate(
-            standard_base_path,
+            local_full_size_image_base_path,
             raster_path,
             raster_opts
           )
         end
 
         # Generate IIIF zooming image viewer tiles
-        Imogen.with_image(standard_base_path, { revalidate: true }) do |image|
+        Imogen.with_image(local_full_size_image_base_path, { revalidate: true }) do |image|
           Imogen::Iiif::Tiles.for(
             image,
             Triclops::RasterCache.instance.iiif_cache_directory_for_identifier(
@@ -186,7 +197,7 @@ module Triclops
         end
         # If the Imogen::Iiif::Tiles.generate_with_vips_dzsave method were fully implemented,
         # we would call it like this:
-        # Imogen.with_image(standard_base_path, { revalidate: true }) do |image|
+        # Imogen.with_image(local_full_size_image_base_path, { revalidate: true }) do |image|
         #   Imogen::Iiif::Tiles.generate_with_vips_dzsave(
         #     image,
         #     Triclops::RasterCache.instance.iiif_cache_directory_for_identifier(self.identifier),
