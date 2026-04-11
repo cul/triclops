@@ -9,6 +9,8 @@ class Resource < ApplicationRecord
     BestType::PcdmTypeLookup::TEXT, BestType::PcdmTypeLookup::UNSTRUCTURED_TEXT
   ].freeze
 
+  LOCAL_FILE_URI_SCHEMES = ['file', 'railsroot', 'placeholder'].freeze
+
   enum status: { pending: 0, processing: 1, failure: 2, ready: 3 }
 
   before_validation :wait_for_source_uri_if_local_disk_file
@@ -76,26 +78,27 @@ class Resource < ApplicationRecord
   #
   # @api private
   # @yield source_image_file [File] A file holding the source image content.
-  def with_source_image_file
+  def with_source_image_file # rubocop:disable Metrics/AbcSize
     raise Errno::ENOENT, 'Missing source_uri' if self.source_uri.blank?
     uri_scheme = Addressable::URI.parse(self.source_uri).scheme
 
-    if ['file', 'railsroot', 'placeholder'].include?(uri_scheme)
+    if LOCAL_FILE_URI_SCHEMES.include?(uri_scheme)
       yield File.new(Triclops::Utils::UriUtils.location_uri_to_file_path(self.source_uri))
       return
     end
 
-    raise Errno::ENOENT, "Could not resolve file location: #{self.source_uri}"
-  end
-
-  # @api private
-  def source_uri_is_readable?
-    return false if source_uri.blank?
-    with_source_image_file do |file|
-      return File.readable?(file)
+    if uri_scheme == 's3'
+      parsed_uri = Addressable::URI.parse(self.source_uri)
+      file_extension = File.extname(parsed_uri.path)
+      # Temporarily download the file from S3 and yield the path to the temporary download
+      Triclops::FileHelper.working_directory_temp_file('s3-download', file_extension) do |tempfile|
+        S3_CLIENT.get_object({ bucket: parsed_uri.host, key: parsed_uri.path[1..], response_target: tempfile.path })
+        yield tempfile
+      end
+      return
     end
-  rescue Errno::ENOENT
-    false
+
+    raise Errno::ENOENT, "Could not resolve file location: #{self.source_uri}"
   end
 
   def raster_exists?(base_type, raster_opts)

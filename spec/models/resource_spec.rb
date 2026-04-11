@@ -290,17 +290,6 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  describe '#source_uri_is_readable?' do
-    it 'returns true when the source uri file is readable' do
-      expect(ready_resource.source_uri_is_readable?).to eq(true)
-    end
-
-    it 'returns true when the source uri file is not readable' do
-      ready_resource.source_uri = 'file:///this/file/does/not/exist.txt'
-      expect(ready_resource.source_uri_is_readable?).to eq(false)
-    end
-  end
-
   describe '#raster_exists?' do
     it 'returns true when a raster file exists' do
       allow(File).to receive(:exist?).with(

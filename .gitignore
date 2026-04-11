@@ -46,6 +46,7 @@ database.yml
 redis.yml
 resque.yml
 permissions.yml
+aws.yml
 
 # macOS Files
 .DS_Store
