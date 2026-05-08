@@ -149,7 +149,7 @@ module Triclops
       # Generates the following "standard" derivatives:
       # - Scaled versions at Triclops::Iiif::Constants::RECOMMENDED_SIZES.
       # - IIIF zooming image viewer tiles
-      def generate_commonly_requested_standard_derivatives
+      def generate_commonly_requested_standard_derivatives # rubocop:disable Metrics/AbcSize
         # NOTE: The local full size image could be either a source_uri path that points to a local image OR a
         # the path to a previously generated standard base image.
         local_full_size_image_base_path = self.locally_readable_source_base_path
