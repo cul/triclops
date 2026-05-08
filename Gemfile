@@ -10,9 +10,9 @@ gem 'best_type', '~> 0.0.10'
 # For schema validation
 gem 'dry-validation', '~> 1.10.0'
 # Use imogen for generating images
-# gem 'imogen', '~> 0.4.0'
+gem 'imogen', '~> 0.5.0'
 # gem 'imogen', path: '../imogen'
-gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'rounding-fix-and-ffi-library-name-fix'
+# gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'rounding-fix-and-ffi-library-name-fix'
 # Explicitly including io-wait dependency to match default version of the gem that comes with Ruby 3.0.
 gem 'io-wait', '0.2.0'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
