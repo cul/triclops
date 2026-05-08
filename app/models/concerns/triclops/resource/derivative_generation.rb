@@ -194,6 +194,10 @@ module Triclops
             FileUtils.mkdir_p(File.dirname(suggested_tile_dest_path))
             Imogen::Iiif.convert(img, suggested_tile_dest_path, format, iiif_opts)
           end
+        rescue StandardError => e
+          # If we run into an exception here, log additional information and re-raise the exception
+          Rails.logger.error "Encountered a problem while generating #{Triclops::Iiif::Constants::TILE_SIZE} size tiles for #{local_full_size_image_base_path}"
+          raise e
         end
         # If the Imogen::Iiif::Tiles.generate_with_vips_dzsave method were fully implemented,
         # we would call it like this:

@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/cul/imogen.git
-  revision: 40b46325b37be42e3fa6c1493ebb5072ea7ad0d4
-  branch: ffi_library_name_fix
+  revision: 0246c456bf7d3ef0650c1b4013b140382205aff9
+  branch: rounding-fix-and-ffi-library-name-fix
   specs:
     imogen (0.4.0)
       ruby-vips (>= 2.3.0)
