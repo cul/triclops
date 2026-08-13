@@ -105,8 +105,8 @@ RSpec.describe Resource, type: :model do
       ready_resource.switch_to_pending_state_if_core_properties_changed!
     end
 
-    it 'changes the status for a persisted resource if its source_uri has changed' do
-      expect(ready_resource).to receive(:status=).with(:pending)
+    it 'does not change the status for a persisted resource if its source_uri has changed' do
+      expect(ready_resource).not_to receive(:status=).with(:pending)
       ready_resource.source_uri = ready_resource.source_uri.sub('sample.jpg', 'sample2.jpg')
       ready_resource.switch_to_pending_state_if_core_properties_changed!
     end

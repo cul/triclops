@@ -69,7 +69,14 @@ class Resource < ApplicationRecord
   # derivative regeneration).
   def switch_to_pending_state_if_core_properties_changed!
     return if new_record?
-    return unless self.source_uri_changed? || self.featured_region_changed? || self.pcdm_type_changed?
+
+    # TODO: Decide if we also want to include `self.source_uri_changed? ||` in the line below.
+    # This would mean that whenever a Resource is saved, we would check if the source uri has changed and
+    # regenerate derivatives if it has. The downside is that if an access copy in Hyacinth is relocated and
+    # has a different path (but has otheriwse unchanged file content), that will trigger regeneration
+    # of Triclops derivatives (which could be wasteful, especially if the source uri is in S3,
+    # because we'd need to re-download the file from S3). Would there even be any upsides?
+    return unless self.featured_region_changed? || self.pcdm_type_changed?
 
     self.status = :pending
   end
