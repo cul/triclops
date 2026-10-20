@@ -21,8 +21,10 @@ def validate_triclops_config!
       "Must be one of: #{Triclops::Iiif::Constants::CacheMissMode::VALID_MODES.join(', ')}"
   end
 
-  if TRICLOPS[:raster_cache] && TRICLOPS[:raster_cache][:enabled] && TRICLOPS[:raster_cache][:directory].nil?
-    raise 'Missing TRICLOPS[raster_cache][directory] config (required when TRICLOPS[raster_cache][enabled] == true)'
+  if TRICLOPS[:raster_cache] && TRICLOPS[:raster_cache][:enabled]
+    raise 'Missing TRICLOPS[raster_cache][path] config (required when TRICLOPS[raster_cache][enabled] == true)' if TRICLOPS[:raster_cache][:path].nil?
+    raise 'Missing TRICLOPS[raster_cache][read_location_prefix] config (required when TRICLOPS[raster_cache][enabled] == true)' if TRICLOPS[:raster_cache][:read_location_prefix].nil?
+    raise 'Missing TRICLOPS[raster_cache][write_location_prefix] config (required when TRICLOPS[raster_cache][enabled] == true)' if TRICLOPS[:raster_cache][:write_location_prefix].nil?
   end
 
   # Lock config validation

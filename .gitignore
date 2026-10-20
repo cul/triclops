@@ -25,9 +25,6 @@
 /public/assets
 .byebug_history
 
-# Ignore master key for decrypting credentials and more.
-/config/master.key
-
 /public/packs
 /public/packs-test
 /node_modules
@@ -60,3 +57,17 @@ node_modules
 
 # Local rake file
 local.rake
+
+# Ignore credentials (any *.key files)
+/config/credentials/*.key
+# Ignore development and test credential files
+/config/credentials/development.yml.enc
+/config/credentials/test.yml.enc
+
+# For safety, ignore the master key and old credentials file (even though we don't use these files anymore)
+/config/master.key
+/config/credentials.yml.enc
+
+/config/credentials/development.key
+
+/config/credentials/test.key

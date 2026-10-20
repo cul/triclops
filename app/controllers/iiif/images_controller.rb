@@ -102,7 +102,7 @@ class Iiif::ImagesController < ApplicationController
       @resource, base_type, original_raster_opts, normalized_raster_opts
     )
 
-    if cache_hit || TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::GENERATE_AND_CACHE || @resource.source_uri_is_placeholder?
+    if cache_hit || TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::GENERATE_AND_CACHE # || @resource.placeholder?
       @resource.yield_cached_raster(base_type, raster_opts_to_try) do |raster_file|
         send_raster_file(raster_file, raster_opts_to_try, @resource.updated_at, delivery_method: :send_file)
       end
@@ -113,6 +113,9 @@ class Iiif::ImagesController < ApplicationController
     else # TRICLOPS[:raster_cache][:on_miss] == Triclops::Iiif::Constants::CacheMissMode::ERROR
       # If we got here, that means we have a cache miss and we will treat this as an error (because we do not expect
       # clients to request this resource with the given raster opts).  We'll render a 404 response to the user.
+      if @resource.placeholder?
+        Rails.logger.unknown("#{@resource.identifier} was not found. Did you forget to run the triclops:placeholders:generate rake task to generate placeholder resources and derivatives?")
+      end
       render plain: 'not found', status: :not_found
     end
   end

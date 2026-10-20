@@ -2,7 +2,9 @@ source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 # Amazon S3 SDK
-gem 'aws-sdk-s3', '~> 1'
+gem 'aws-sdk-s3', '~> 1.214'
+# Additional gem enabling the AWS SDK to calculate CRC32C checksums
+gem 'aws-crt', '~> 0.2.0'
 # URI encoding and decoding
 gem 'addressable', '~> 2.8.0'
 # Use best_type for media type detection
@@ -10,7 +12,7 @@ gem 'best_type', '~> 0.0.10'
 # For schema validation
 gem 'dry-validation', '~> 1.10.0'
 # Use imogen for generating images
-gem 'imogen', '~> 0.5.0'
+gem 'imogen', '~> 0.5.1'
 # gem 'imogen', path: '../imogen'
 # gem 'imogen', git: 'https://github.com/cul/imogen.git', branch: 'rounding-fix-and-ffi-library-name-fix'
 # Explicitly including io-wait dependency to match default version of the gem that comes with Ruby 3.0.

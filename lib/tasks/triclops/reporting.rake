@@ -1,11 +1,12 @@
 require 'find'
 
 namespace :triclops do
+  # TODO: Update reporting tasks below so that they work with local files or S3 files
   namespace :reporting do
     desc "Calculate the combined IIIF cache byte size for a single identifier"
     task calculate_iiif_cache_size_for_identifier: :environment do
       identifier = ENV['identifier']
-      dir_path = Triclops::RasterCache.instance.cache_directory_for_identifier(identifier)
+      dir_path = Triclops::RasterCache.instance_for_reading.cache_location_for_identifier_directory(identifier)
       total_size = 0
       Find.find(dir_path) do |path|
         if File.file?(path)
@@ -37,7 +38,7 @@ namespace :triclops do
 
       identifiers.each_with_index do |identifier, i|
         puts "Counting #{i+1} of #{identifiers.length}"
-        dir_path = Triclops::RasterCache.instance.cache_directory_for_identifier(identifier)
+        dir_path = Triclops::RasterCache.instance_for_reading.cache_location_for_identifier_directory(identifier)
         Find.find(dir_path) do |path|
           if File.file?(path)
             total_size += File.size(path)

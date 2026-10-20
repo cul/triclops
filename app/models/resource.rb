@@ -11,12 +11,18 @@ class Resource < ApplicationRecord
 
   LOCAL_FILE_URI_SCHEMES = ['file', 'railsroot', 'placeholder'].freeze
 
+  attr_accessor :create_base_derivatives_now
+
   enum status: { pending: 0, processing: 1, failure: 2, ready: 3 }
 
   before_validation :wait_for_source_uri_if_local_disk_file
   before_save :switch_to_pending_state_if_core_properties_changed!
   after_save :queue_base_derivative_generation_if_pending
-  after_destroy :delete_filesystem_cache!
+  after_destroy :delete_file_cache!
+
+  def placeholder?
+    self.identifier.start_with?('placeholder:')
+  end
 
   def wait_for_source_uri_if_local_disk_file
     return if self.source_uri.nil? || !self.source_uri.start_with?('file:/')
@@ -32,37 +38,20 @@ class Resource < ApplicationRecord
     end
   end
 
-  # Generates a placeholder resource dynamically (without any database interaction),
-  # based on the given placeholder_resource_identifier.  Note that this method
-  # will raise an exception if placeholder_resource_identifier is not a
-  # recognized placeholder identifier.
-  def self.placeholder_resource_for(placeholder_resource_identifier)
-    raise ArgumentError unless KNOWN_PLACEHOLDER_IDENTIFIERS.include?(placeholder_resource_identifier)
-    Resource.new(
-      identifier: placeholder_resource_identifier,
-      has_view_limitation: false,
-      status: 'ready',
-      updated_at: Time.current,
-      source_uri: placeholder_resource_identifier.sub(':', ':///'),
-      standard_width: PLACEHOLDER_SIZE,
-      standard_height: PLACEHOLDER_SIZE,
-      limited_width: Triclops::Iiif::Constants::LIMITED_BASE_SIZE,
-      limited_height: Triclops::Iiif::Constants::LIMITED_BASE_SIZE,
-      featured_width: Triclops::Iiif::Constants::FEATURED_BASE_SIZE,
-      featured_height: Triclops::Iiif::Constants::FEATURED_BASE_SIZE,
-      featured_region: "0,0,#{PLACEHOLDER_SIZE},#{PLACEHOLDER_SIZE}"
-    )
-  end
-
   # Clear ALL cached image files for this resource.
-  def delete_filesystem_cache!
-    FileUtils.rm_rf(Triclops::RasterCache.instance.cache_directory_for_identifier(self.identifier))
+  def delete_file_cache!
+    Triclops::RasterCache.instance_for_writing.delete_cache_for_identifier(self.identifier)
   end
 
   def queue_base_derivative_generation_if_pending
     return if self.source_uri.nil?
     return unless self.pending?
-    CreateBaseDerivativesJob.perform_later(self.identifier)
+    if self.create_base_derivatives_now
+      Rails.logger.unknown("Creating base derivatives now for #{self.identifier} because create_base_derivatives_now flag was set.")
+      CreateBaseDerivativesJob.perform_now(self.identifier)
+    else
+      CreateBaseDerivativesJob.perform_later(self.identifier)
+    end
   end
 
   # Certain property changes should will trigger a switch to the pending state (which will trigger base
@@ -81,35 +70,12 @@ class Resource < ApplicationRecord
     self.status = :pending
   end
 
-  # Yields a block with a File reference to the source image file for this Resource.
-  #
-  # @api private
-  # @yield source_image_file [File] A file holding the source image content.
-  def with_source_image_file # rubocop:disable Metrics/AbcSize
-    raise Errno::ENOENT, 'Missing source_uri' if self.source_uri.blank?
-    uri_scheme = Addressable::URI.parse(self.source_uri).scheme
-
-    if LOCAL_FILE_URI_SCHEMES.include?(uri_scheme)
-      yield File.new(Triclops::Utils::UriUtils.location_uri_to_file_path(self.source_uri))
-      return
-    end
-
-    if uri_scheme == 's3'
-      parsed_uri = Addressable::URI.parse(self.source_uri)
-      file_extension = File.extname(parsed_uri.path)
-      # Temporarily download the file from S3 and yield the path to the temporary download
-      Triclops::FileHelper.working_directory_temp_file('s3-download', file_extension) do |tempfile|
-        S3_CLIENT.get_object({ bucket: parsed_uri.host, key: parsed_uri.path[1..], response_target: tempfile.path })
-        yield tempfile
-      end
-      return
-    end
-
-    raise Errno::ENOENT, "Could not resolve file location: #{self.source_uri}"
-  end
-
   def raster_exists?(base_type, raster_opts)
-    File.exist?(iiif_cache_path_for_raster(base_type, raster_opts))
+    Triclops::RasterCache.instance_for_reading.storage_object_for_raster(
+      base_type,
+      self.identifier,
+      raster_opts
+    ).exist?
   end
 
   # Uses this Resource's pcdm_type value to determine which placeholder identifier should be returned
@@ -129,69 +95,58 @@ class Resource < ApplicationRecord
   end
 
   # @api private
-  def iiif_cache_path_for_raster(base_type, raster_opts)
-    Triclops::RasterCache.instance.iiif_cache_path_for_raster(
+  def yield_cached_raster(base_type, raster_opts)
+    storage_object_for_reading = Triclops::RasterCache.instance_for_reading.storage_object_for_raster(
       base_type,
-      source_uri_is_placeholder? ? self.source_uri : self.identifier,
+      self.identifier,
       raster_opts
     )
-  end
 
-  # @api private
-  def yield_cached_raster(base_type, raster_opts)
-    # Get cache path
-    raster_file_path = iiif_cache_path_for_raster(base_type, raster_opts)
+    unless storage_object_for_reading.exist?
+      storage_object_for_writing = Triclops::RasterCache.instance_for_writing.storage_object_for_raster(
+        base_type,
+        self.identifier,
+        raster_opts
+      )
 
-    unless File.exist?(raster_file_path)
       # We use a blocking lock so that two processes don't try to to run the
       # same file creation operation at the same time.
-      Triclops::Lock.instance.with_blocking_lock(raster_file_path) do
+      Triclops::Lock.instance.with_blocking_lock(storage_object_for_writing.location_uri) do
         # We do a second File.exists? check inside of the lock to ensure
         # that file generation does not occur if the file was created
         # while waiting to establish this lock.
-        unless File.exist?(raster_file_path)
-          FileUtils.mkdir_p(File.dirname(raster_file_path))
-          self.with_source_image_file do |source_image_file|
-            Triclops::Raster.generate(source_image_file.path, raster_file_path, raster_opts)
+        unless storage_object_for_reading.exist?
+          storage_object_for_reading.with_file do |source_image_file|
+            storage_object_for_writing.write do |dest_file|
+              Triclops::Raster.generate(source_image_file.path, dest_file.path, raster_opts)
+            end
           end
         end
       end
     end
 
-    yield File.new(raster_file_path)
-  end
-
-  # @api private
-  def yield_uncached_raster(raster_opts)
-    raster_tempfile_path = self.class.generate_raster_tempfile_path(raster_opts[:format])
-    FileUtils.mkdir_p(File.dirname(raster_tempfile_path))
-    self.with_source_image_file do |source_image_file|
-      Triclops::Raster.generate(source_image_file.path, raster_tempfile_path, raster_opts)
-    end
-    temp_file = File.new(raster_tempfile_path)
-    yield temp_file
-  ensure
-    # Close file if it's open and then unlink the file.
-    if temp_file
-      temp_file.close unless temp_file.closed?
-      File.unlink(temp_file)
+    storage_object_for_reading.with_file do |file|
+      yield File.new(file.path)
     end
   end
 
-  # Returns true if this Resource's source_uri points to a placeholder image value.
-  #
   # @api private
-  # @return [Boolean] true if source_uri starts with 'placeholder:///'
-  def source_uri_is_placeholder?
-    return false if self.source_uri.nil?
-    self.source_uri.start_with?('placeholder:///')
-  end
+  def yield_uncached_raster(base_type, raster_opts)
+    storage_object_for_reading = case base_type
+                                 when Triclops::Iiif::Constants::BASE_TYPE_STANDARD
+                                   # We use the source_uri because we're not currently generating an additional standard base
+                                   Triclops::Storage.storage_object_for(self.source_uri)
+                                 else
+                                   Triclops::RasterCache.instance_for_reading.storage_object_for_base(base_type, self.identifier)
+                                 end
 
-  def self.generate_raster_tempfile_path(extension = '.blob')
-    loop do
-      # Generate unique temp raster in temp location
-      raster_tempfile_path = File.join(TRICLOPS[:tmp_directory], "#{Rails.application.class.module_parent_name.underscore}-tmp-#{SecureRandom.uuid}.#{extension}")
-      return raster_tempfile_path unless File.exist?(raster_tempfile_path)
+    # Newest implementation (TODO: Delete old implementation after verifying that new implementation works as expected)
+    Triclops::FileHelper.working_directory_temp_file('tmp-uncached-raster', ".#{raster_opts[:format]}") do |tempfile|
+      storage_object_for_reading.with_file do |source_image_file|
+        Triclops::Raster.generate(source_image_file.path, tempfile.path, raster_opts)
+      end
+
+      yield tempfile
     end
   end
 end

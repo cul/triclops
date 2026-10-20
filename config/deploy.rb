@@ -27,7 +27,7 @@ append  :linked_files,
         'config/permissions.yml',
         'config/redis.yml',
         'config/resque.yml',
-        'config/master.key'
+        "config/credentials/#{fetch(:deploy_name)}.key"
 
 # Default value for linked_dirs is []
 append :linked_dirs, 'log', 'tmp/pids', 'node_modules'

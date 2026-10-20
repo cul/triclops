@@ -5,7 +5,11 @@ development:
   access_stats_enabled: false
   raster_cache:
     on_miss: 'error' # ['generate_and_do_not_cache', 'generate_and_cache', 'error']
-    directory: <%= Rails.root.join('tmp', 'triclops_development_cache', 'raster') %>
+    path: 'raster'
+    read_location_prefix: <%= 'file://' + Rails.root.join('tmp', 'triclops_development_cache').to_s %>
+    write_location_prefix: <%= 'file://' + Rails.root.join('tmp', 'triclops_development_cache').to_s %>
+    #read_location_prefix: 's3://example-bucket/triclops/development_cache'
+    #write_location_prefix: 's3://example-bucket/triclops/development_cache'
   lock:
     lock_timeout: 10
     retry_delay: 1
@@ -20,7 +24,11 @@ test:
   access_stats_enabled: false
   raster_cache:
     on_miss: 'error' # ['generate_and_do_not_cache', 'generate_and_cache', 'error']
-    directory: <%= Rails.root.join('tmp', 'triclops_test_cache', 'raster') %>
+    path: 'raster'
+    read_location_prefix: <%= 'file://' + Rails.root.join('tmp', 'triclops_test_cache').to_s %>
+    write_location_prefix: <%= 'file://' + Rails.root.join('tmp', 'triclops_test_cache').to_s %>
+    #read_location_prefix: 's3://example-bucket/triclops/test_cache'
+    #write_location_prefix: 's3://example-bucket/triclops/test_cache'
   lock:
     lock_timeout: 10
     retry_delay: 1

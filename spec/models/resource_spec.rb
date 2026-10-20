@@ -62,16 +62,16 @@ RSpec.describe Resource, type: :model do
   end
 
   describe '#destroy' do
-    it 'calls delete_filesystem_cache! after destroy' do
-      expect(ready_resource).to receive(:delete_filesystem_cache!).and_call_original
+    it 'calls delete_file_cache! after destroy' do
+      expect(ready_resource).to receive(:delete_file_cache!).and_call_original
       ready_resource.destroy
     end
   end
 
-  describe '#delete_filesystem_cache!' do
+  describe '#delete_file_cache!' do
     it 'performs the expected deletion operation' do
-      expect(FileUtils).to receive(:rm_rf).with(Triclops::RasterCache.instance.cache_directory_for_identifier(ready_resource.identifier))
-      ready_resource.delete_filesystem_cache!
+      expect(FileUtils).to receive(:rm_rf).with(Triclops::RasterCache.instance_for_writing.cache_location_for_identifier_directory(ready_resource.identifier))
+      ready_resource.delete_file_cache!
     end
   end
 
@@ -156,19 +156,20 @@ RSpec.describe Resource, type: :model do
 
     after do
       # Clean up files created by the test
-      ready_resource.delete_filesystem_cache!
+      ready_resource.delete_file_cache!
     end
 
     it 'when an existing raster file does not exist, generates and caches a new raster file and yields that new raster file' do
-      expected_cache_path = Triclops::RasterCache.instance.iiif_cache_path_for_raster(base_type, ready_resource.identifier, raster_opts)
+      expected_cache_read_path = Triclops::RasterCache.instance_for_reading.iiif_cache_location_for_raster(base_type, ready_resource.identifier, raster_opts)
+      expected_cache_write_path = Triclops::RasterCache.instance_for_writing.iiif_cache_location_for_raster(base_type, ready_resource.identifier, raster_opts)
       expect(Triclops::Raster).to receive(:generate).with(
         Triclops::Utils::UriUtils.location_uri_to_file_path(ready_resource.source_uri),
-        expected_cache_path,
+        expected_cache_write_path,
         raster_opts
       ).and_call_original
 
       ready_resource.yield_cached_raster(base_type, raster_opts) do |raster_file|
-        expect(raster_file.path).to eq(expected_cache_path)
+        expect(raster_file.path).to eq(expected_cache_read_path)
       end
     end
 
@@ -205,8 +206,8 @@ RSpec.describe Resource, type: :model do
 
       after do
         # Cleanup after tests
-        ready_resource1.delete_filesystem_cache!
-        ready_resource2.delete_filesystem_cache!
+        ready_resource1.delete_file_cache!
+        ready_resource2.delete_file_cache!
       end
 
       context 'when both resources have the same NON-"placeholder:///"-prefixed source_uri value' do
@@ -294,7 +295,7 @@ RSpec.describe Resource, type: :model do
     it 'returns true when a raster file exists' do
       allow(File).to receive(:exist?).with(
         File.join(
-          Triclops::RasterCache.instance.cache_directory_for_identifier(ready_resource.identifier),
+          Triclops::RasterCache.instance_for_reading.cache_location_for_identifier_directory(ready_resource.identifier),
           "standard/iiif/full/full/0/color.png"
         )
       ).and_return(true)
@@ -345,18 +346,35 @@ RSpec.describe Resource, type: :model do
     end
   end
 
-  describe '#iiif_cache_path_for_raster' do
+  describe '#iiif_cache_read_path_for_raster' do
     it 'works as expected for a non-placeholder source_uri' do
-      expect(ready_resource.iiif_cache_path_for_raster(base_type, raster_opts)).to eq(
-        "#{TRICLOPS[:raster_cache][:directory]}/62/60/d5/01/"\
+      expect(ready_resource.iiif_cache_read_path_for_raster(base_type, raster_opts)).to eq(
+        "#{TRICLOPS[:raster_cache][:read_location_prefix]}/#{TRICLOPS[:raster_cache][:path]}/62/60/d5/01/"\
         "6260d501613040c7993755c92621e0a90abc64e3a81006259e6532a785d5072c/#{base_type}/iiif/full/full/0/color.png"
       )
     end
 
     it 'works as expected for a placeholder source_uri' do
       ready_resource.source_uri = 'placeholder:///cool'
-      expect(ready_resource.iiif_cache_path_for_raster(base_type, raster_opts)).to eq(
-        "#{TRICLOPS[:raster_cache][:directory]}/14/31/7a/33/"\
+      expect(ready_resource.iiif_cache_read_path_for_raster(base_type, raster_opts)).to eq(
+        "#{TRICLOPS[:raster_cache][:read_location_prefix]}/#{TRICLOPS[:raster_cache][:path]}/14/31/7a/33/"\
+        "14317a3348a284ab4de0eee4c049370b93f709c9661c200d569902b959224ae1/#{base_type}/iiif/full/full/0/color.png"
+      )
+    end
+  end
+
+  describe '#iiif_cache_write_path_for_raster' do
+    it 'works as expected for a non-placeholder source_uri' do
+      expect(ready_resource.iiif_cache_write_path_for_raster(base_type, raster_opts)).to eq(
+        "#{TRICLOPS[:raster_cache][:write_location_prefix]}/#{TRICLOPS[:raster_cache][:path]}/62/60/d5/01/"\
+        "6260d501613040c7993755c92621e0a90abc64e3a81006259e6532a785d5072c/#{base_type}/iiif/full/full/0/color.png"
+      )
+    end
+
+    it 'works as expected for a placeholder source_uri' do
+      ready_resource.source_uri = 'placeholder:///cool'
+      expect(ready_resource.iiif_cache_write_path_for_raster(base_type, raster_opts)).to eq(
+        "#{TRICLOPS[:raster_cache][:write_location_prefix]}/#{TRICLOPS[:raster_cache][:path]}/14/31/7a/33/"\
         "14317a3348a284ab4de0eee4c049370b93f709c9661c200d569902b959224ae1/#{base_type}/iiif/full/full/0/color.png"
       )
     end

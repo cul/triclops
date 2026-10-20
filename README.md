@@ -4,10 +4,10 @@ Triclops is a cool IIIF server.
 
 ## Requirements
 
-- Ruby 3.0
-- Redis 3
+- Ruby 3.3
+- Redis 8
 - libvips (for Imogen image conversion gem dependency)
-- Node 10 or 12
+- Node 20
 
 ## First-Time Setup (for developers)
 
@@ -20,7 +20,8 @@ yarn install # this assumes you have node and yarn installed (tested with Node 1
 bundle exec rake triclops:setup:config_files # Set up config files like redis.yml and resque.yml
 bundle exec rake triclops:setup:sample_resources # Set up sample Resource objects ('sample' and 'sample-with-transparency')
 bundle exec rake db:migrate # Run database migrations
-rails s -p 3000 # Start the application using rails server
+be rake triclops:placeholders:generate # Generate placeholder resources and derivatives
+AWS_PROFILE=your-selected-profile-name rails s -p 3000 # Start the application using rails server, using the specified AWS_PROFILE for AWS access
 ```
 
 ## Testing
